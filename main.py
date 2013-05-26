@@ -138,7 +138,7 @@ class NetGUI(Gtk.Window):
             f.close()
             
         # Start initial scan
-        self.startScan()
+        self.startScan(None)
         window.show_all()
                     
     def onExit(self, e):
@@ -151,7 +151,7 @@ class NetGUI(Gtk.Window):
         Gtk.main_quit()
         
     # This class is only here to actually start running all the code in "onScan" in a separate process.
-    def startScan(self):
+    def startScan(self, e):
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
         self.p.join()
@@ -375,7 +375,7 @@ def CheckGrep(self, grepCmd):
     # and return it's output.
     p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
     output = ((p.communicate()[0]).decode("utf-8")).strip()
-    return output    
+    return output   
 
 """ 
 def #cleanup()():
@@ -393,7 +393,9 @@ if __name__ == "__main__":
     try:
         #cleanup()
         Gdk.threads_init()
+        Gdk.threads_enter()
         NetGUI()
+        Gdk.threads_leave()
         Gtk.main()
     except KeyboardInterrupt:
         Gtk.main_quit()
