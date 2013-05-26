@@ -7,16 +7,17 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import time
 import webbrowser
 
 
 # Import Third Party Libraries
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk, GObject, GLib
 import dialogs
 
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.1"
+progVer = "0.3"
 conf_dir = "/etc/netctl"
 status_dir = "/usr/lib/NetGUI/"
 int_file = status_dir + "interface.cfg"
@@ -32,6 +33,9 @@ for arg in sys.argv:
     if arg == '--help' or arg == '-h':
         print("NetGUI; The NetCTL GUI! \nWe need root :)")
         sys.exit(77)
+    if arg == '--version' or arg == '-v':
+        print("Your NetGUI version is " + progVer + ".")
+        sys.exit(0)    
         
 # Let's make sure we're root, while at it.
 euid = os.geteuid()
@@ -50,12 +54,13 @@ except IOError:
 fp.write(str(pid_number)+"\n")
 #fp.flush()
 """
-    
+
 # The main class of NetGUI. Nifty name, eh?
 class NetGUI(Gtk.Window):
     # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong, but it works.
     def __init__(self):
         self.InitUI()
+        
         
     # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
     def InitUI(self):
@@ -73,7 +78,8 @@ class NetGUI(Gtk.Window):
         
         # Grab the "window1" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
-        window.show_all()
+        window.connect("delete-event", Gtk.main_quit)
+        
         
         # Setup the main area of NetGUI: The network list.
         APList = self.builder.get_object("treeview1")
@@ -112,7 +118,7 @@ class NetGUI(Gtk.Window):
         "onDConnect": self.dConnectClicked,
         "onPrefClicked": self.prefClicked,
         "onHelpClicked": self.helpClicked,
-        "onIssueReport": self.reportIssue,
+        "onIssueReport": self.reportIssue
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
@@ -120,14 +126,21 @@ class NetGUI(Gtk.Window):
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If 
         # it doesn't work, I will re-implement the old way.
-        intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
-        print(intNameCheck)
-        self.interfaceName = intNameCheck[166:172]
-        f = open(int_file, 'w')
-        f.write(self.interfaceName)
-        f.close()
-        print(self.interfaceName)
-
+        if os.path.isfile(int_file) != True:
+            intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
+            self.interfaceName = intNameCheck[166:172]
+            f = open(int_file, 'w')
+            f.write(self.interfaceName)
+            f.close()
+        else:
+            f = open(int_file, 'r')
+            self.interfaceName = f.readline()
+            f.close()
+            
+        # Start initial scan
+        self.startScan(None)
+        window.show_all()
+                    
     def onExit(self, e):
         if self.p == None:
             pass
@@ -141,15 +154,97 @@ class NetGUI(Gtk.Window):
     def startScan(self, e):
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
+        self.p.join()
+        self.checkScan()
         
-    def onScan(self, e=None):        
+    def onScan(self, e=None):  
+        print("I started!")
+        # Open file that we will save the command output to, run the CheckOutput function on that
+        # command, which in turn will turn it from bytes into a unicode string, and close the file.
         iwf = open(iwlist_file, 'w')
-        output = str(subprocess.check_output("iwlist wlp2s0 scan", shell=True))
+        command = "iwlist " + self.interfaceName + " scan"
+        output = CheckOutput(self, command)
         iwf.write(output)
-        iwf.write("Testing....")
         iwf.close()
-        print("I scanned!")
-    
+        print("I finished scanning!")
+        
+    def checkScan(self):
+        self.APStore.clear()
+        
+        # Run 3 separate grep commands to find various items we will need.
+        grepCmd = "grep 'ESSID' " + iwlist_file
+        grepCmd2 = "grep 'Encryption key:\|WPA' " + iwlist_file
+        grepCmd3 = "grep 'Quality' " + iwlist_file
+        print("I ran the grep commands!")
+        
+        # Check the output of the grep commands, and clean them up for presentation.
+        output = CheckGrep(self, grepCmd).replace('ESSID:', '').replace('"', '').split("\n")
+        output2 = CheckGrep(self, grepCmd2).replace(' ', '').replace('Encryptionkey:', '').replace("\nIE", '').replace(":WPAVersion", '').split("\n")
+        output3 = CheckGrep(self, grepCmd3).replace(' ', '').split("\n")
+        
+        # Fix the quality signals to show only the quality (i.e., 68/70) instead of everything else
+        # i.e., Quality = 68/70 Signal Level=-52dBm
+        for i in range(len(output3)):
+            strings = output3[i]
+            strings = strings[8:13]
+            output3[i] = strings
+        print("I cleaned up the grep commands!")
+            
+        # Create a dictionary so we can set separate treeiters we can access to make this work.
+        aps = {}
+        print("I created a dictionary!")
+        
+        # set an int that we will convert to str soon.
+        i = 0
+        # For each network located in the original grep command, add it to a row, while creating that same
+        # row.
+        for network in output:
+            aps["row" + str(i)] = self.APStore.append([network, "", "", ""])
+            i = i + 1
+            print("I added " + network)
+            
+        # Set i back to zero. For each item in the second grep command, convert the name to 
+        # a human-meaningful one, and add it to the relevant network.
+        i = 0
+        for encrypt in output2:
+            if encrypt == "on1":
+                encryption = "WPA"
+            elif encrypt == "on2":
+                encryption = "WPA2"
+            elif encrypt == "off":
+                encryption = "Open"
+            else:
+                encryption = "WEP"
+            self.APStore.set(aps["row" + str(i)], 1, encryption)
+            i = i + 1
+            print("I added " + encryption)
+            
+        # Set i back to zero. For each detected quality, add it to the relevant network.
+        i = 0
+        for quality in output3:
+            self.APStore.set(aps["row" + str(i)], 2, quality)
+            i = i + 1
+            print("I added " + quality)
+        
+        # Set i back to zero. Check if we are connected to a network. If we ARE, find out
+        # which one we are connected to.
+        i = 0
+        if IsConnected() == False:
+            for network in output:
+                self.APStore.set(aps["row" + str(i)], 3, "No")
+                i = i + 1
+        else:
+            i = 0
+            connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
+            for network in output:               
+                if network == connectedNetwork:
+                    self.APStore.set(aps["row" + str(i)], 3, "Yes")
+                    i = i + 1
+                else:                
+                    self.APStore.set(aps["row" + str(i)], 3, "No")
+                    i = i + 1
+                    
+        print("OnScan is finished!")        
     def connectClicked(self, menuItem):
         pass
     
@@ -263,13 +358,25 @@ def CreateConfig(name, interface, security, key=None, ip='dhcp'):
 def IsConnected():
     # If we are connected to a network, it lists it. Otherwise, it returns nothing (or an empty byte).
     check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
-    print(check)
     if check == b'':
-        print("False")
         return False
     else:
-        print("True")
         return True
+    
+def CheckOutput(self, command):
+    # Run a command, return what it's output was, and convert it from bytes to unicode
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    output = p.communicate()[0]
+    output = output.decode("utf-8")  
+    return output
+
+def CheckGrep(self, grepCmd):
+    # Run a grep command, decode it from bytes to unicode, strip it of spaces, 
+    # and return it's output.
+    p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
+    output = ((p.communicate()[0]).decode("utf-8")).strip()
+    return output   
+
 """ 
 def #cleanup()():
     # Clean up time
@@ -284,8 +391,11 @@ def #cleanup()():
     """
 if __name__ == "__main__":
     try:
-        #cleanup()()
+        #cleanup()
+        Gdk.threads_init()
+        Gdk.threads_enter()
         NetGUI()
+        Gdk.threads_leave()
         Gtk.main()
     except KeyboardInterrupt:
         Gtk.main_quit()
