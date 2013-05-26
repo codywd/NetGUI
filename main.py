@@ -54,11 +54,7 @@ except IOError:
 fp.write(str(pid_number)+"\n")
 #fp.flush()
 """
-class AutoJoiningThread(threading.Thread):
-    def run(self):
-        threading.Thread.run(self)
-        
-            
+
 # The main class of NetGUI. Nifty name, eh?
 class NetGUI(Gtk.Window):
     # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong, but it works.
@@ -83,7 +79,7 @@ class NetGUI(Gtk.Window):
         # Grab the "window1" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
         window.connect("delete-event", Gtk.main_quit)
-        window.show_all()
+        
         
         # Setup the main area of NetGUI: The network list.
         APList = self.builder.get_object("treeview1")
@@ -140,6 +136,10 @@ class NetGUI(Gtk.Window):
             f = open(int_file, 'r')
             self.interfaceName = f.readline()
             f.close()
+            
+        # Start initial scan
+        self.startScan()
+        window.show_all()
                     
     def onExit(self, e):
         if self.p == None:
@@ -151,7 +151,7 @@ class NetGUI(Gtk.Window):
         Gtk.main_quit()
         
     # This class is only here to actually start running all the code in "onScan" in a separate process.
-    def startScan(self, e):
+    def startScan(self):
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
         self.p.join()
