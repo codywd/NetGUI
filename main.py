@@ -17,17 +17,16 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 #import dialogs
 
 # Setting base app information, such as version, and configuration directories/files.
-prog_version = "0.3"
-conf_dir = "/etc/netctl/"
-status_dir = "/usr/lib/netgui/"
-int_file = status_dir + "interface.cfg"
-iwconfig_file = status_dir + "iwlist.log"
-iwlist_file = status_dir + "iwlist.log"
-pid_file = status_dir + "program.pid"
-share_dir = "/usr/share/netgui/"
-img_dir = "imgs/"
-pid_number = os.getpid()
-pref_file = status_dir + "preferences.cfg"
+progVer = "0.3"
+confDir = "/etc/netctl"
+statusDir = "/usr/lib/NetGUI/"
+intFile = statusDir + "interface.cfg"
+iwconfigFile = statusDir + "iwlist.log"
+iwlistFile = statusDir + "iwlist.log"
+pidFile = statusDir + "program.pid"
+imgLoc = "/usr/share/NetGUI/imgs"
+pidNumber = os.getpid()
+prefFile = statusDir + "preferences.cfg"
 
 # Allows for command line arguments. Currently only a "Help" argument, but more to come.
 # TODO import ext libary to handel this for us
@@ -36,33 +35,38 @@ for arg in sys.argv:
         print("netgui; The NetCTL GUI! \nWe need root :)")
         sys.exit(0)
     if arg == '--version' or arg == '-v':
-        print("Your netgui version is " + prog_version + ".")
-        sys.exit(0)
+        print("Your NetGUI version is " + progVer + ".")
+        sys.exit(0)    
 
+if os.path.exists(statusDir):
+    pass
+else:
+    subprocess.call("mkdir " + statusDir, shell=True)
+                      
 # Let's make sure we're root, while at it.
 euid = os.geteuid()
 if euid != 0:
     print("netgui NEEDS to be run as root, since many commands we use requires it.\nPlease sudo or su -c and try again.")
     sys.exit(77)
-"""
-# Let's also not allow any more than one instance of netgui.
-fp = open(pid_file, 'w')
+
+# Let's also not allow any more than one instance of NetGUI.
+fp = open(pidFile, 'w')
 try:
     fcntl.lockf(fp, fcntl.LOCK_EX|fcntl.LOCK_NB)
 except IOError:
-    print("We only allow one instance of netgui to be running at a time for precautionary reasons.")
+    print("We only allow one instance of NetGUI to be running at a time for precautionary reasons.")
     sys.exit(1)
 
-fp.write(str(pid_number)+"\n")
-#fp.flush()
-"""
+fp.write(str(pidNumber)+"\n")
+fp.flush()
 
 # The main class of netgui. Nifty name, eh?
 class netgui(Gtk.Window):
     # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong, but it works.
     def __init__(self):
         self.InitUI()
-
+        
+        
     # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
     def InitUI(self):
         IsConnected()
@@ -70,46 +74,48 @@ class netgui(Gtk.Window):
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
         self.builder.add_from_file("UI.glade")
-
+        
         # Init Vars
         self.scanning = False
-        self.APindex = 0
+        self.APindex = 0  
         self.p = None
         #self.interfaceName = None
-
+        
         # Grab the "window1" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
         window.connect("delete-event", Gtk.main_quit)
-
-
-        # Setup the main area of netgui: The network list.
-        APList = self.builder.get_object("treeview1")
+        
+        
+        # Setup the main area of NetGUI: The network list.
+        self.APList = self.builder.get_object("treeview1")
         self.APStore = Gtk.ListStore(str, str, str, str)
-        APList.set_model(self.APStore)
-
+        self.APList.set_model(self.APStore)
+        
         # Set Up Columns
         # renderer1 = The Cell renderer. Basically allows for text to show.
         # column1 = The actual setup of the column. Arguments = title, CellRenderer, textIndex)
         # Actually append the column to the treeview.
         SSIDCellRenderer = Gtk.CellRendererText()
         SSIDColumn = Gtk.TreeViewColumn("SSID", SSIDCellRenderer, text=0)
-        APList.append_column(SSIDColumn)
-
+        self.APList.append_column(SSIDColumn)
+        
         connectQualityCellRenderer = Gtk.CellRendererText()
         connectQualityColumn = Gtk.TreeViewColumn("Connection Quality", connectQualityCellRenderer, text=1)
-        APList.append_column(connectQualityColumn)
-
+        self.APList.append_column(connectQualityColumn)
+        
         securityTypeCellRenderer = Gtk.CellRendererText()
         securityTypeColumn = Gtk.TreeViewColumn("Security Type", securityTypeCellRenderer, text=2)
-        APList.append_column(securityTypeColumn)
-
+        self.APList.append_column(securityTypeColumn)
+        
         connectedCellRenderer = Gtk.CellRendererText()
         connectedColumn = Gtk.TreeViewColumn("Connected?", connectedCellRenderer, text=3)
-        APList.append_column(connectedColumn)
-
+        self.APList.append_column(connectedColumn)
+        
         # Set TreeView as Reorderable
-        APList.set_reorderable(True)
-
+        self.APList.set_reorderable(True)
+        
+        # Setting the selection detection. Heh, that rhymes.        
+        
         # Set all the handlers I defined in glade to local functions.
         handlers = {
         "onExit": self.onExit,
@@ -123,34 +129,34 @@ class netgui(Gtk.Window):
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
-
+        
         # This should automatically detect their wireless device name. I'm not 100% sure
-        # if it works on every computer, but we can only know from multiple tests. If
+        # if it works on every computer, but we can only know from multiple tests. If 
         # it doesn't work, I will re-implement the old way.
-        if os.path.isfile(int_file) != True:
-            intNameCheck = str(subprocess.check_output("/usr/bin/cat /proc/net/wireless"))
+        if os.path.isfile(intFile) != True:
+            intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
             self.interfaceName = intNameCheck[166:172]
-            f = open(int_file, 'w')
+            f = open(intFile, 'w')
             f.write(self.interfaceName)
             f.close()
         else:
-            f = open(int_file, 'r')
+            f = open(intFile, 'r')
             self.interfaceName = f.readline()
             f.close()
-
+            
         # Start initial scan
-        window.show_all()
         self.startScan(None)
-
+        window.show_all()
+                    
     def onExit(self, e):
         if self.p == None:
             pass
         else:
             self.p.terminate()
-        #cleanup()()
+        #cleanup()
         sys.exit()
         Gtk.main_quit()
-
+        
     # This class is only here to actually start running all the code in "onScan" in a separate process.
     def startScan(self, e):
         self.p = multiprocessing.Process(target=self.onScan)
@@ -162,27 +168,27 @@ class netgui(Gtk.Window):
         print("please wait, now scanning!")
         # Open file that we will save the command output to, run the CheckOutput function on that
         # command, which in turn will turn it from bytes into a unicode string, and close the file.
-        iwf = open(iwlist_file, 'w')
+        iwf = open(iwlistFile, 'w')
         command = "iwlist " + self.interfaceName + " scan"
         output = CheckOutput(self, command)
         iwf.write(output)
         iwf.close()
         print("I finished scanning!")
-
+        
     def checkScan(self):
         self.APStore.clear()
-
+        
         # Run 3 separate grep commands to find various items we will need.
-        grepCmd = "grep 'ESSID' " + iwlist_file
-        grepCmd2 = "grep 'Encryption key:\|WPA' " + iwlist_file
-        grepCmd3 = "grep 'Quality' " + iwlist_file
+        grepCmd = "grep 'ESSID' " + iwlistFile
+        grepCmd2 = "grep 'Encryption key:\|WPA' " + iwlistFile
+        grepCmd3 = "grep 'Quality' " + iwlistFile
         print("I ran the grep commands!")
-
+        
         # Check the output of the grep commands, and clean them up for presentation.
-        output = CheckGrep(self, grepCmd).replace('ESSID:', '').replace('"', '').split("\n")
+        output = CheckGrep(self, grepCmd).replace('ESSID:', '').replace('"', '').replace(" ", '').split("\n")
         output2 = CheckGrep(self, grepCmd2).replace(' ', '').replace('Encryptionkey:', '').replace("\nIE", '').replace(":WPAVersion", '').split("\n")
         output3 = CheckGrep(self, grepCmd3).replace(' ', '').split("\n")
-
+        
         # Fix the quality signals to show only the quality (i.e., 68/70) instead of everything else
         # i.e., Quality = 68/70 Signal Level=-52dBm
         for i in range(len(output3)):
@@ -190,9 +196,11 @@ class netgui(Gtk.Window):
             strings = strings[8:13]
             output3[i] = strings
         print("I cleaned up the grep commands!")
-
+            
         # Create a dictionary so we can set separate treeiters we can access to make this work.
         aps = {}
+        print("I created a dictionary!")
+        
         # set an int that we will convert to str soon.
         i = 0
         # For each network located in the original grep command, add it to a row, while creating that same
@@ -235,21 +243,67 @@ class netgui(Gtk.Window):
         else:
             i = 0
             connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
-            for network in output:
+            for network in output:               
                 if network == connectedNetwork:
                     self.APStore.set(aps["row" + str(i)], 3, "Yes")
                     i = i + 1
-                else:
+                else:                
                     self.APStore.set(aps["row" + str(i)], 3, "No")
                     i = i + 1
-
+                    
         print("OnScan is finished!")
+        
+    def responseToDialog(entry, dialog, response):
+        dialog.response(response)
+            
+    def getText(self):
+        #base this on a message dialog
+        dialog = Gtk.MessageDialog(
+            None,
+            Gtk.DIALOG_MODAL | Gtk.DIALOG_DESTROY_WITH_PARENT,
+            Gtk.MESSAGE_QUESTION,
+            Gtk.BUTTONS_OK,
+            None)
+        dialog.set_markup('Please enter the password for your network:')
+        #create the text input field
+        entry = Gtk.Entry()
+        #allow the user to press enter to do ok
+        entry.connect("activate", responseToDialog, dialog, Gtk.RESPONSE_OK)
+        #create a horizontal box to pack the entry and a label
+        hbox = Gtk.HBox()
+        hbox.pack_start(Gtk.Label("Name:"), False, 5, 5)
+        hbox.pack_end(entry)
+        #add it and show it
+        dialog.vbox.pack_end(hbox, True, True, 0)
+        dialog.show_all()
+        #go go go
+        dialog.run()
+        text = entry.get_text()
+        dialog.destroy()
+        return text    
+    
     def connectClicked(self, menuItem):
-        pass
-
+        select = self.APList.get_selection()
+        networkSSID = self.getSSID(select)
+        networkSecurity = self.getSecurity(select)
+        password = self.getText()
+        #CreateConfig(networkSSID, self.interfaceName, networkSecurity, "")
+    
+    def getSSID(self, selection):
+        model, treeiter = selection.get_selected()
+        if treeiter != None:
+            return model[treeiter][0]
+        
+    def getSecurity(self, selection):
+        model, treeiter = selection.get_selected()
+        if treeiter != None:
+            securityType =  model[treeiter][2] 
+            securityType = securityType.lower()
+            return securityType
+        
     def dConnectClicked(self, menuItem):
         pass
-
+    
     def prefClicked(self, menuItem):
         # Setting up the cancel function here fixes a wierd bug where, if outside of the prefClicked function
         # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
@@ -257,57 +311,57 @@ class netgui(Gtk.Window):
         # titlebar box. I don't know how to fix either besides this.
         def cancelClicked(self):
             print("Cancel Clicked.")
-            preferencesDialog.hide()
-
+            preferencesDialog.hide()  
+            
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
         # and because it makes the program flow more, IMHO
         def saveClicked(self):
-            print("Saving... eventually.")
-
+            print("Saving... eventually.")        
+            
         # Get the three things we need from UI.glade
         preferencesDialog = self.builder.get_object("prefDialog")
         saveButton = self.builder.get_object("saveButton")
         cancelButton = self.builder.get_object("cancelButton")
-
+        
         # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
-
+        
         # Opening the Preferences Dialog.
         preferencesDialog.run()
-
+    
     def helpClicked(self, menuItem):
         # For some reason, anything besides subprocess.Popen
         # causes an error on exiting out of yelp...
         subprocess.Popen("yelp")
-
+    
     def reportIssue(self, menuItem):
-        # Why would I need a local way of reporting issues when I can use github? Exactly.
+        # Why would I need a local way of reporting issues when I can use github? Exactly. 
         # And since no more dependencies are caused by this, I have no problems with it.
         webbrowser.open("https://github.com/codywd/WiFiz/issues")
-
+    
     def aboutClicked(self, menuItem):
         # Getting the about dialog from UI.glade
         aboutDialog = self.builder.get_object("aboutDialog")
         # Opening the about dialog.
         aboutDialog.run()
         # Hiding the about dialog. Read in "prefDialog" for why we hide, not destroy.
-        aboutDialog.hide()
-
+        aboutDialog.hide() 
+        
 class NetCTL(object):
     # These functions are to separate the Netctl code
     # from the GUI code.
     def __init__(self):
         super(NetCTL, self).__init__()
-
+        
     def start(self, network):
         print("netctl:: start " + network)
         subprocess.call(["netctl", "start", network])
-
+    
     def stop(self, network):
         print("netctl:: stop " + network)
         subprocess.call(["netctl", "stop", network])
-
+        
     def stopall(self):
         print("netctl:: stop-all")
         subprocess.call(["netctl", "stop-all"])
@@ -353,7 +407,7 @@ def CreateConfig(name, interface, security, key=None, ip='dhcp'):
                 r'Key=None\n')
     f.write("#Currently, netgui only support DHCP connection. This will change in later versions\nIP=dhcp\n")
     f.close()
-
+    
 def IsConnected():
     # If we are connected to a network, it lists it. Otherwise, it returns nothing (or an empty byte).
     check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
@@ -361,41 +415,37 @@ def IsConnected():
         return False
     else:
         return True
-
+    
 def CheckOutput(self, command):
     # Run a command, return what it's output was, and convert it from bytes to unicode
     p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
     output = p.communicate()[0]
-    output = output.decode("utf-8")
+    output = output.decode("utf-8")  
     return output
 
 def CheckGrep(self, grepCmd):
-    # Run a grep command, decode it from bytes to unicode, strip it of spaces,
+    # Run a grep command, decode it from bytes to unicode, strip it of spaces, 
     # and return it's output.
     p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
     output = ((p.communicate()[0]).decode("utf-8")).strip()
-    return output
+    return output   
 
-"""
-def #cleanup()():
+
+def cleanup():
     # Clean up time
     fcntl.lockf(fp, fcntl.LOCK_UN)
-    #fp.close()
-    os.unlink(pid_file)
+    fp.close()
+    os.unlink(pidFile)
     try:
-        os.unlink(iwlist_file)
-        os.unlink(iwconfig_file)
+        os.unlink(iwlistFile)
+        os.unlink(iwconfigFile)
     except:
         pass
-    """
+
 if __name__ == "__main__":
-    try:
-        #cleanup()
-        Gdk.threads_init()
-        Gdk.threads_enter()
-        netgui()
-        Gdk.threads_leave()
-        Gtk.main()
-    except KeyboardInterrupt:
-        Gtk.main_quit()
-        sys.exit(0)
+cleanup()
+Gdk.threads_init()
+Gdk.threads_enter()
+netgui()
+Gdk.threads_leave()
+Gtk.main()
