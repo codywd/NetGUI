@@ -251,42 +251,12 @@ class netgui(Gtk.Window):
                     self.APStore.set(aps["row" + str(i)], 3, "No")
                     i = i + 1
                     
-        print("OnScan is finished!")
-        
-    def responseToDialog(entry, dialog, response):
-        dialog.response(response)
-            
-    def getText(self):
-        #base this on a message dialog
-        dialog = Gtk.MessageDialog(
-            None,
-            Gtk.DIALOG_MODAL | Gtk.DIALOG_DESTROY_WITH_PARENT,
-            Gtk.MESSAGE_QUESTION,
-            Gtk.BUTTONS_OK,
-            None)
-        dialog.set_markup('Please enter the password for your network:')
-        #create the text input field
-        entry = Gtk.Entry()
-        #allow the user to press enter to do ok
-        entry.connect("activate", responseToDialog, dialog, Gtk.RESPONSE_OK)
-        #create a horizontal box to pack the entry and a label
-        hbox = Gtk.HBox()
-        hbox.pack_start(Gtk.Label("Name:"), False, 5, 5)
-        hbox.pack_end(entry)
-        #add it and show it
-        dialog.vbox.pack_end(hbox, True, True, 0)
-        dialog.show_all()
-        #go go go
-        dialog.run()
-        text = entry.get_text()
-        dialog.destroy()
-        return text    
+        print("OnScan is finished!")  
     
     def connectClicked(self, menuItem):
         select = self.APList.get_selection()
         networkSSID = self.getSSID(select)
         networkSecurity = self.getSecurity(select)
-        password = self.getText()
         #CreateConfig(networkSSID, self.interfaceName, networkSecurity, "")
     
     def getSSID(self, selection):
