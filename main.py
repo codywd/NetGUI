@@ -17,14 +17,15 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 #import dialogs
 
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.3"
-conf_dir = "/etc/netctl"
+prog_version = "0.3"
+conf_dir = "/etc/netctl/"
 status_dir = "/usr/lib/netgui/"
 int_file = status_dir + "interface.cfg"
 iwconfig_file = status_dir + "iwlist.log"
 iwlist_file = status_dir + "iwlist.log"
 pid_file = status_dir + "program.pid"
-img_loc = "/usr/share/netgui/imgs"
+share_dir = "/usr/share/netgui/"
+img_dir = "imgs/"
 pid_number = os.getpid()
 pref_file = status_dir + "preferences.cfg"
 
@@ -35,7 +36,7 @@ for arg in sys.argv:
         print("netgui; The NetCTL GUI! \nWe need root :)")
         sys.exit(0)
     if arg == '--version' or arg == '-v':
-        print("Your netgui version is " + progVer + ".")
+        print("Your netgui version is " + prog_version + ".")
         sys.exit(0)
 
 # Let's make sure we're root, while at it.
@@ -61,7 +62,6 @@ class netgui(Gtk.Window):
     # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong, but it works.
     def __init__(self):
         self.InitUI()
-
 
     # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
     def InitUI(self):
@@ -128,7 +128,7 @@ class netgui(Gtk.Window):
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
         if os.path.isfile(int_file) != True:
-            intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
+            intNameCheck = str(subprocess.check_output("/usr/bin/cat /proc/net/wireless"))
             self.interfaceName = intNameCheck[166:172]
             f = open(int_file, 'w')
             f.write(self.interfaceName)
@@ -139,8 +139,8 @@ class netgui(Gtk.Window):
             f.close()
 
         # Start initial scan
-        self.startScan(None)
         window.show_all()
+        self.startScan(None)
 
     def onExit(self, e):
         if self.p == None:
@@ -159,7 +159,7 @@ class netgui(Gtk.Window):
         self.checkScan()
 
     def onScan(self, e=None):
-        print("I started!")
+        print("please wait, now scanning!")
         # Open file that we will save the command output to, run the CheckOutput function on that
         # command, which in turn will turn it from bytes into a unicode string, and close the file.
         iwf = open(iwlist_file, 'w')
@@ -193,8 +193,6 @@ class netgui(Gtk.Window):
 
         # Create a dictionary so we can set separate treeiters we can access to make this work.
         aps = {}
-        print("I created a dictionary!")
-
         # set an int that we will convert to str soon.
         i = 0
         # For each network located in the original grep command, add it to a row, while creating that same
