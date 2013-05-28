@@ -19,12 +19,12 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 # Setting base app information, such as version, and configuration directories/files.
 progVer = "0.3"
 confDir = "/etc/netctl"
-statusDir = "/usr/lib/NetGUI/"
+statusDir = "/usr/lib/netgui/"
 intFile = statusDir + "interface.cfg"
 iwconfigFile = statusDir + "iwlist.log"
 iwlistFile = statusDir + "iwlist.log"
 pidFile = statusDir + "program.pid"
-imgLoc = "/usr/share/NetGUI/imgs"
+imgLoc = "/usr/share/netgui/imgs"
 pidNumber = os.getpid()
 prefFile = statusDir + "preferences.cfg"
 
@@ -35,7 +35,7 @@ for arg in sys.argv:
         print("netgui; The NetCTL GUI! \nWe need root :)")
         sys.exit(0)
     if arg == '--version' or arg == '-v':
-        print("Your NetGUI version is " + progVer + ".")
+        print("Your netgui version is " + progVer + ".")
         sys.exit(0)    
 
 if os.path.exists(statusDir):
@@ -49,12 +49,12 @@ if euid != 0:
     print("netgui NEEDS to be run as root, since many commands we use requires it.\nPlease sudo or su -c and try again.")
     sys.exit(77)
 
-# Let's also not allow any more than one instance of NetGUI.
+# Let's also not allow any more than one instance of netgui.
 fp = open(pidFile, 'w')
 try:
     fcntl.lockf(fp, fcntl.LOCK_EX|fcntl.LOCK_NB)
 except IOError:
-    print("We only allow one instance of NetGUI to be running at a time for precautionary reasons.")
+    print("We only allow one instance of netgui to be running at a time for precautionary reasons.")
     sys.exit(1)
 
 fp.write(str(pidNumber)+"\n")
@@ -86,7 +86,7 @@ class netgui(Gtk.Window):
         window.connect("delete-event", Gtk.main_quit)
         
         
-        # Setup the main area of NetGUI: The network list.
+        # Setup the main area of netgui: The network list.
         self.APList = self.builder.get_object("treeview1")
         self.APStore = Gtk.ListStore(str, str, str, str)
         self.APList.set_model(self.APStore)
