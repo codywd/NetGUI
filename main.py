@@ -443,9 +443,9 @@ def cleanup():
         pass
 
 if __name__ == "__main__":
-cleanup()
-Gdk.threads_init()
-Gdk.threads_enter()
-netgui()
-Gdk.threads_leave()
-Gtk.main()
+    cleanup()
+    Gdk.threads_init()
+    Gdk.threads_enter()
+    netgui()
+    Gdk.threads_leave()
+    Gtk.main()
