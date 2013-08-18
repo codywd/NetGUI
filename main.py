@@ -66,7 +66,6 @@ class netgui(Gtk.Window):
     def __init__(self):
         self.InitUI()
 
-
     # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
     def InitUI(self):
         IsConnected()
@@ -168,11 +167,11 @@ class netgui(Gtk.Window):
         print("please wait, now scanning!")
         # Open file that we will save the command output to, run the CheckOutput function on that
         # command, which in turn will turn it from bytes into a unicode string, and close the file.
-        iwf = open(iwlistFile, 'w')
+        iwlistFileHandler = open(iwlistFile, 'w')
         command = "iwlist " + self.interfaceName + " scan"
         output = CheckOutput(self, command)
-        iwf.write(output)
-        iwf.close()
+        iwlistFileHandler.write(output)
+        iwlistFileHandler.close()
         print("I finished scanning!")
 
     def checkScan(self):
