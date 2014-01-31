@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+# Hello, I launch NetGUI for you!
+
+# Good Luck, and god speed!
+
+exec /usr/bin/python -O /usr/share/NetGUI/main.py $@
