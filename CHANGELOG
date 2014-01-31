@@ -1,0 +1,5 @@
+0.4
+1. Changed NetCTL to use "_" inbetween it's name and the name of the network when creating a profile, instead of "-", because of how systemd treats "-" as a special character.
+2. Fixed a bug where every network was either "Open" or "WEP." It now correctly states "WPA" if that is what it is.
+3. Fixed the column layout. Basically, "Connection Quality" listed the security type, and "Security Type" listed the connection quality.
+4. Fixed the "Connected?" column to correctly state if you are connected to a network.
