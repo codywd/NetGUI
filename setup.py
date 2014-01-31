@@ -10,7 +10,7 @@ setup(name='netgui',
       license = "Custom MIT (see NetGUI.license)",
       #py_modules=['main'],
       #'runner' is in the root.
-      scripts = ['scripts/wifiz'],
+      scripts = ['scripts/netgui'],
       data_files=[('/usr/share/netgui', ['main.py']),
                   ('/usr/share/netgui/imgs/',
         ['imgs/APScan.png', 'imgs/connect.png', 'imgs/exit.png',
