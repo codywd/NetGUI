@@ -1,23 +1,21 @@
 # Maintainer: Cody Dostal <dostalcody@gmail.com>
-# This is NOT ready for use yet. If you install this, wifiz will be removed, and you will be left with the unfunctional NetGUI.
-# This is just being set up in advance.
 
 pkgname=netgui
-_gitname=netgui
-pkgver=0.4
-pkgrel=1
-pkgdesc="GUI for netctl, unstable version."
+_gitname=NetGUI
+pkgver=0.5
+pkgrel=4
+pkgdesc="GUI for netctl, stable but beta. Replaces WiFiz."
 arch=('any')
-url="https://bitbucket.org/codywd/$_gitname"
+url="https://github.com/codywd/$_gitname"
 license=('MIT')
 depends=('python' 'python-gobject' 'wireless_tools' 'netctl' 
 'notify-osd')
 makedepends=('git')
 provides=('netgui')
-conflicts=('netcfg', 'wicd', 'networkmanager')
+conflicts=('netcfg', 'wicd')
 replaces=('wifiz', 'wifiz-git')
 options=(!emptydirs)
-source=('git://github.com/codywd/$_gitname.git')
+source=("git://github.com/codywd/$_gitname.git")
 md5sums=('SKIP')
 sha256sums=('SKIP')
 
