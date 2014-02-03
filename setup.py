@@ -3,10 +3,10 @@
 from distutils.core import setup
 
 setup(name='netgui',
-      version='0.1.0',
+      version='0.3.0',
       description = "More advanced GUI for NetCTL. Replaces WiFiz.",
       author = "Cody Dostal <dostalcody@gmail.com>, Gregory Mullen <greg@grayhatter.com>",
-      url = "https://bitbucket.org/codywd/netgui/overview",
+      url = "https://github.com/codywd/netgui",
       license = "Custom MIT (see NetGUI.license)",
       #py_modules=['main'],
       #'runner' is in the root.
