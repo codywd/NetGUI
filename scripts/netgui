@@ -3,4 +3,4 @@
 
 # Good Luck, and god speed!
 
-exec /usr/bin/python -O /usr/bin/main.py $@
+exec /usr/bin/python -O /usr/share/NetGUI/main.py $@
