@@ -10,7 +10,8 @@ pkgdesc="GUI for netctl, unstable version."
 arch=('any')
 url="https://bitbucket.org/codywd/$_gitname"
 license=('MIT')
-depends=('python' 'python-gobject' 'wireless_tools' 'netctl')
+depends=('python' 'python-gobject' 'wireless_tools' 'netctl' 
+'notify-osd')
 makedepends=('git')
 provides=('netgui')
 conflicts=('netcfg', 'wicd', 'networkmanager')
