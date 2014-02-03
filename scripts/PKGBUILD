@@ -2,13 +2,13 @@
 # This is NOT ready for use yet. If you install this, wifiz will be removed, and you will be left with the unfunctional NetGUI.
 # This is just being set up in advance.
 
-pkgname=netgui-nightly
-_gitname=netgui-nightly
-pkgver=v0.1
+pkgname=netgui
+_gitname=netgui
+pkgver=0.4
 pkgrel=1
-pkgdesc="GUI for netctl, nightly version."
+pkgdesc="GUI for netctl, unstable version."
 arch=('any')
-url="https://bitbucket.org/codywd/netgui"
+url="https://bitbucket.org/codywd/$_gitname"
 license=('MIT')
 depends=('python' 'python-gobject' 'wireless_tools' 'netctl')
 makedepends=('git')
@@ -16,13 +16,14 @@ provides=('netgui')
 conflicts=('netcfg', 'wicd', 'networkmanager')
 replaces=('wifiz', 'wifiz-git')
 options=(!emptydirs)
-source=('wifiz-nightly::https://bitbucket.org/codywd/netgui/src/40d872c8d462f8b629ac7ae332034877345997bf/?at=develop')
+source=('git://github.com/codywd/$_gitname.git')
 md5sums=('SKIP')
+sha256sums=('SKIP')
 
 pkgver() {
   cd $srcdir/wifiz-nightly
   # Use the tag of the last commit
-  git describe --always | sed 's|-|.|g'
+  git describe --always --long | sed -E 's/([^-]*-g)/r\1/;s/-/./g'
 }
 
 package() {

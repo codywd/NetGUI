@@ -14,11 +14,12 @@ import webbrowser
 
 # Import Third Party Libraries
 from gi.repository import Gtk, Gdk, GObject, GLib
-#import dialogs
+from gi.repository import Notify
+
 
 # Setting base app information, such as version, and configuration directories/files.
 progVer = "0.3"
-confDir = "/etc/netctl"
+conf_dir = "/etc/netctl/"
 statusDir = "/usr/lib/netgui/"
 intFile = statusDir + "interface.cfg"
 license_dir = '/usr/share/licenses/netgui/'
@@ -133,20 +134,15 @@ class netgui(Gtk.Window):
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
-        if os.path.isfile(intFile) != True:
-            intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
-            self.interfaceName = intNameCheck[166:172]
-            f = open(intFile, 'w')
-            f.write(self.interfaceName)
-            f.close()
-        else:
-            f = open(intFile, 'r')
-            self.interfaceName = f.readline()
-            f.close()
+        
+            
+        self.interfaceName = GetInterface()
 
         # Start initial scan
         self.startScan(None)
         window.show_all()
+        Notify.init("NetGUI")
+        
 
     def onExit(self, e):
         if self.p == None:
@@ -169,6 +165,7 @@ class netgui(Gtk.Window):
         # Open file that we will save the command output to, run the CheckOutput function on that
         # command, which in turn will turn it from bytes into a unicode string, and close the file.
         iwlistFileHandler = open(iwlistFile, 'w')
+        InterfaceCtl.up(self, self.interfaceName)
         command = "iwlist " + self.interfaceName + " scan"
         output = CheckOutput(self, command)
         iwlistFileHandler.write(output)
@@ -257,9 +254,32 @@ class netgui(Gtk.Window):
     def connectClicked(self, menuItem):
         select = self.APList.get_selection()
         networkSSID = self.getSSID(select)
-        networkSecurity = self.getSecurity(select)
-        #CreateConfig(networkSSID, self.interfaceName, networkSecurity, "")
-
+        profile = "netgui_" + networkSSID
+        netinterface = GetInterface()
+        if os.path.isfile(conf_dir + profile):
+            InterfaceCtl.down(self, netinterface)
+            NetCTL.start(self, profile)
+            n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+            n.show()
+        else:
+            networkSecurity = self.getSecurity(select)
+            key = get_network_pw(self, "Please enter network password", "Network Password Required.")
+            CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
+            try:
+                InterfaceCtl.down(self, netinterface)
+                NetCTL.start(self, profile)
+                n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+                n.show()
+                #wx.MessageBox("You are now connected to " +
+                #             str(nameofProfile).strip() + ".", "Connected.")
+            except:
+                #wx.MessageBox("There has been an error, please try again. If"
+                #              " it persists, please contact Cody Dostal at "
+                #              "dostalcody@gmail.com.", "Error!")        
+                n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
+                n.show()
+                Notify.uninit()            
+    
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter != None:
@@ -273,8 +293,16 @@ class netgui(Gtk.Window):
             return securityType
 
     def dConnectClicked(self, menuItem):
-        pass
-
+        select = self.APList.get_selection()
+        networkSSID = self.getSSID(select)
+        profile = "netgui_" + networkSSID
+        interfaceName = GetInterface()
+        NetCTL.stop(self, profile)
+        InterfaceCtl.down(self, interfaceName)
+        self.startScan(None)
+        n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + networkSSID, "dialog-information")
+        n.show()        
+        
     def prefClicked(self, menuItem):
         # Setting up the cancel function here fixes a wierd bug where, if outside of the prefClicked function
         # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
@@ -354,29 +382,22 @@ class InterfaceCtl(object):
 
     def up(self, interface):
         print("interface:: up: " + interface)
-        subprocess.call(["ip", "link", "set", "down", "dev", interface])
+        subprocess.call(["ip", "link", "set", "up", "dev", interface])
 
-def CreateConfig(name, interface, security, key=None, ip='dhcp'):
+def CreateConfig(name, interface, security, key, ip='dhcp'):
     print("Creating Config File! Don't interrupt!\n")
     filename = "netgui_" + name
     f = open(conf_dir + filename, 'w')
-    f.write("# This is the description of the profile. Feel free to change if you want.\n" +
-            "Description='This profile was generated by netgui for " + str(name)+".\n" +
-            "# The Interface. Do not change, or the profile will not work.\n" +
+    f.write("Description='This profile was generated by netgui for " + str(name)+".'\n" +
             "Interface=" + str(interface) + "\n" +
-            "#The connection type. Do not change, or it will no longer work.\n" +
             "Connection=wireless\n" +
-            "#The security type. Only change if you have personally changed the security type.\n" +
             "Security=" + str(security) + "\n" +
-            "#The SSID of the network. Only change if you have personally changed it recently.\n" +
-            "ESSID='" + str(name) + "\n")
+            "ESSID='" + str(name) + "'\n")
     if key:
-        f.write("#This is the password for your network. Only change if you recently changed it.\n" +
-        r'Key=\"' + key + "\n")
+        f.write(r"Key='" + key + "'\n")
     else:
-        f.write("#You didn't have security. We recommend changing that. Add some please.\n" +
-                r'Key=None\n')
-    f.write("#Currently, netgui only support DHCP connection. This will change in later versions\nIP=dhcp\n")
+        f.write(r'Key=None')
+    f.write("\nIP=dhcp\n")
     f.close()
 
 def IsConnected():
@@ -394,12 +415,52 @@ def CheckOutput(self, command):
     output = output.decode("utf-8")
     return output
 
+def get_network_pw(parent, message, title=''):
+    # Returns user input as a string or None
+    # If user does not input text it returns None, NOT AN EMPTY STRING.
+    dialogWindow = Gtk.MessageDialog(parent,
+                          Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                          Gtk.MessageType.QUESTION,
+                          Gtk.ButtonsType.OK_CANCEL,
+                          message)
+
+    dialogWindow.set_title(title)
+
+    dialogBox = dialogWindow.get_content_area()
+    userEntry = Gtk.Entry()
+    userEntry.set_visibility(False)
+    userEntry.set_invisible_char("*")
+    userEntry.set_size_request(250,0)
+    dialogBox.pack_end(userEntry, False, False, 0)
+
+    dialogWindow.show_all()
+    response = dialogWindow.run()
+    text = userEntry.get_text() 
+    dialogWindow.destroy()
+    if (response == Gtk.ResponseType.OK) and (text != ''):
+        return text
+    else:
+        return None
+
 def CheckGrep(self, grepCmd):
     # Run a grep command, decode it from bytes to unicode, strip it of spaces,
     # and return it's output.
     p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
     output = ((p.communicate()[0]).decode("utf-8")).strip()
     return output
+
+def GetInterface():
+    if os.path.isfile(intFile) != True:
+        intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
+        interfaceName = intNameCheck[166:172]
+        f = open(intFile, 'w')
+        f.write(self.interfaceName)
+        f.close()
+    else:
+        f = open(intFile, 'r')
+        interfaceName = f.readline()
+        f.close()   
+        return str(interfaceName).strip()
 
 
 def cleanup():
