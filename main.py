@@ -188,8 +188,8 @@ class netgui(Gtk.Window):
         for i in range(len(output3)):
             strings = output3[i]
             strings = strings[8:13]
-            output3[i] = strings
-
+            strings = str(int(round(float(strings[0])/float(strings[3])*100))).rjust(3)+" %"
+            output3[i] = strings    
         # Create a dictionary so we can set separate treeiters we can access to make this work.
         aps = {}
         
@@ -220,6 +220,7 @@ class netgui(Gtk.Window):
         i = 0
         for quality in output3:
             self.APStore.set(aps["row" + str(i)], 1, quality)
+            #s3 = str(int(round(float(s[0])/float(s[3])*100))).rjust(3)+" %"
             i = i + 1
 
         # Set i back to zero. Check if we are connected to a network. If we ARE, find out
