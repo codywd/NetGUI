@@ -11,14 +11,12 @@ import threading
 import time
 import webbrowser
 
-
 # Import Third Party Libraries
 from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
-
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.5.1"
+progVer = "0.51"
 conf_dir = "/etc/netctl/"
 statusDir = "/usr/lib/netgui/"
 progLoc = "/usr/share/netgui/"
