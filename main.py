@@ -17,7 +17,7 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.51"
+progVer = "0.6"
 conf_dir = "/etc/netctl/"
 statusDir = "/usr/lib/netgui/"
 progLoc = "/usr/share/netgui/"
