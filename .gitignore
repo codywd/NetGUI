@@ -200,3 +200,5 @@ pip-log.txt
 .pid
 *.pid
 *~
+*.tar.gz
+.tar.gz
