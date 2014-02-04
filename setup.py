@@ -11,7 +11,7 @@ setup(name='netgui',
       py_modules=['main'],
       #'runner' is in the root.
       scripts = ['scripts/netgui'],
-      data_files=[('/usr/share/netgui/', ['main.py']),
+      data_files=[('/usr/share/netgui/', ['main.py', 'UI.glade']),
                   ('/usr/share/netgui/imgs/',
         ['imgs/APScan.png', 'imgs/connect.png', 'imgs/exit.png',
         'imgs/newprofile.png', 'imgs/aboutLogo.png', 'imgs/disconnect.png',
