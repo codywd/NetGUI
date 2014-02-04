@@ -1,3 +1,10 @@
+0.6 
+1. Removed dependency for wireless-tools
+2. Changed scanning method to wpa_cli
+
+Known Issues for 0.6:
+1. Sometimes, a blank network will appear. I'm working on figuring out how to avoid this.
+
 0.5
 1. Updated PKGBUILD
 2. Changed Quality from fractions to percenteges.

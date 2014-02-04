@@ -1,6 +1,7 @@
 #! /usr/bin/python3
 
 # Import Standard Libraries
+import csv
 import fcntl
 import multiprocessing
 import os
@@ -23,11 +24,12 @@ progLoc = "/usr/share/netgui/"
 intFile = statusDir + "interface.cfg"
 license_dir = '/usr/share/licenses/netgui/'
 iwconfigFile = statusDir + "iwlist.log"
+wpacliFile = statusDir + "wpa_cli.log"
 iwlistFile = statusDir + "iwlist.log"
 pidFile = statusDir + "program.pid"
 imgLoc = "/usr/share/netgui/imgs"
-pidNumber = os.getpid()
 prefFile = statusDir + "preferences.cfg"
+pidNumber = os.getpid()
 
 # Allows for command line arguments. Currently only a "Help" argument, but more to come.
 # TODO import ext libary to handel this for us
@@ -156,90 +158,71 @@ class netgui(Gtk.Window):
         self.p.start()
         self.p.join()
         self.checkScan()
-
+        
     def onScan(self, e=None):
-        print("please wait, now scanning!")
-        # Open file that we will save the command output to, run the CheckOutput function on that
-        # command, which in turn will turn it from bytes into a unicode string, and close the file.
-        iwlistFileHandler = open(iwlistFile, 'w')
+        print("Please wait! Now Scanning.")
+        wpacliFileHandler = open(wpacliFile, 'w')
         InterfaceCtl.up(self, self.interfaceName)
-        command = "iwlist " + self.interfaceName + " scan"
-        output = CheckOutput(self, command)
-        iwlistFileHandler.write(output)
-        iwlistFileHandler.close()
-        print("I finished scanning!")
-
+        subprocess.call(["wpa_cli", "scan"])
+        output=CheckOutput(self, "wpa_cli scan_results")
+        wpacliFileHandler.write(output)
+        wpacliFileHandler.close()
+        print("Done Scanning!")
+    
     def checkScan(self):
         self.APStore.clear()
-
-        # Run 3 separate grep commands to find various items we will need.
-        grepCmd = "grep 'ESSID' " + iwlistFile
-        grepCmd2 = "grep 'Encryption key:\|WPA' " + iwlistFile
-        grepCmd3 = "grep 'Quality' " + iwlistFile
-
-        # Check the output of the grep commands, and clean them up for presentation.
-        output = CheckGrep(self, grepCmd).replace('ESSID:', '').replace('"', '').replace(" ", '').split("\n")
-        output2 = CheckGrep(self, grepCmd2).replace(' ', '').replace('Encryptionkey:', '').replace("\nIE", '').replace(":WPAVersion", '').split("\n")
-        output3 = CheckGrep(self, grepCmd3).replace(' ', '').split("\n")
-
-        # Fix the quality signals to show only the quality (i.e., 68/70) instead of everything else
-        # i.e., Quality = 68/70 Signal Level=-52dBm
-        for i in range(len(output3)):
-            strings = output3[i]
-            strings = strings[8:13]
-            strings = str(int(round(float(strings[0])/float(strings[3])*100))).rjust(3)+" %"
-            output3[i] = strings    
-        # Create a dictionary so we can set separate treeiters we can access to make this work.
-        aps = {}
         
-        # set an int that we will convert to str soon.
-        i = 0
-        # For each network located in the original grep command, add it to a row, while creating that same
-        # row.
-        for network in output:
-            aps["row" + str(i)] = self.APStore.append([network, "", "", ""])
-            i = i + 1
-
-        # Set i back to zero. For each item in the second grep command, convert the name to
-        # a human-meaningful one, and add it to the relevant network.
-        i = 0
-        for encrypt in output2:
-            if "WPA" in encrypt:
-                encryption = "WPA"
-            elif "WPA2" in encrypt:
-                encryption = "WPA2"
-            elif encrypt == "off":
-                encryption = "Open"
-            else:
-                encryption = "WEP"
-            self.APStore.set(aps["row" + str(i)], 2, encryption)
-            i = i + 1
-
-        # Set i back to zero. For each detected quality, add it to the relevant network.
-        i = 0
-        for quality in output3:
-            self.APStore.set(aps["row" + str(i)], 1, quality)
-            #s3 = str(int(round(float(s[0])/float(s[3])*100))).rjust(3)+" %"
-            i = i + 1
-
-        # Set i back to zero. Check if we are connected to a network. If we ARE, find out
-        # which one we are connected to.
-        i = 0
-        if IsConnected() == False:
-            for network in output:
-                self.APStore.set(aps["row" + str(i)], 3, "No")
-                i = i + 1
-        else:
+        #os.remove("test_file")
+        #subprocess.call(["wpa_cli", "scan"])
+        #output = CheckOutput("wpa_cli scan_results")
+        #with open("test_file", 'w+') as f:
+        #    f.write(output)
+        #    f.close()
+        with open(wpacliFile, 'r') as tsv:
+            r = csv.reader(tsv, dialect='excel-tab')
+            next(r)
+            next(r)
+            aps = {}
             i = 0
-            connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
-            for network in output:
-                if network in connectedNetwork:
-                    self.APStore.set(aps["row" + str(i)], 3, "Yes")
-                    i = i + 1
+            for row in r:                
+                network = row[4]            
+                if network == "":
+                    next(r)
+                aps["row" + str(i)] = self.APStore.append([network, "", "", ""])   
+                
+                quality = row[2]
+                if int(quality) <= -100:
+                    percent = "0%"
+                elif int(quality) >= -50:
+                    percent = "100%"
                 else:
+                    fquality = (2 * (int(quality) + 100))
+                    percent = str(fquality) + "%"
+                self.APStore.set(aps["row" + str(i)], 1, percent)
+                
+                security = row[3]
+                if "WPA" and "PSK" and not "TKIP" in security:
+                    encryption = "WPA2-PSK"
+                elif "WPA" and "TKIP" in security:
+                    encryption = "WPA2-TKIP"
+                elif "OPENSSID" in security:
+                    encryption = "Open"
+                elif "WEP" in security:
+                    encryption = "WEP"
+                else:
+                    encryption = "Unknown"
+                self.APStore.set(aps["row" + str(i)], 2, encryption)
+                
+                
+                if IsConnected() == False:
                     self.APStore.set(aps["row" + str(i)], 3, "No")
-                    i = i + 1
-
+                else:
+                    connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
+                    if network in connectedNetwork:
+                        self.APStore.set(aps["row" + str(i)], 3, "Yes")
+                    else:
+                        self.APStore.set(aps["row" + str(i)], 3, "No")              
+                i=i+1
 
     def connectClicked(self, menuItem):
         select = self.APList.get_selection()
