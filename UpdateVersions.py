@@ -62,6 +62,16 @@ class ModifyOtherVers():
                 print(line.replace(line, 'progVer = "' + prog.version + '"'))
             else:
                 print(line.rstrip("\n"))
+                
+        ModifyOtherVers.UpdateReadme()
+                
+    def UpdateReadme():
+        README = ("README.md")
+        for line in fileinput.input(README, inplace=True):
+            if "# NetGUI v" in line:
+                print(line.replace(line, "# NetGUI v" + prog.version))
+            else:
+                print(line.rstrip("\n"))
 
 prog = ProgramProperties('UI.glade')
 prog.version = progVer
