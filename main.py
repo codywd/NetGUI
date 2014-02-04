@@ -21,6 +21,7 @@ from gi.repository import Notify
 progVer = "0.5"
 conf_dir = "/etc/netctl/"
 statusDir = "/usr/lib/netgui/"
+progLoc = "/usr/share/netgui/"
 intFile = statusDir + "interface.cfg"
 license_dir = '/usr/share/licenses/netgui/'
 iwconfigFile = statusDir + "iwlist.log"
@@ -74,7 +75,7 @@ class netgui(Gtk.Window):
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("UI.glade")
+        self.builder.add_from_file(progLoc + "UI.glade")
 
         # Init Vars
         self.scanning = False
