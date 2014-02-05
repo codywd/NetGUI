@@ -3,6 +3,7 @@
 # Import Standard Libraries
 import csv
 import fcntl
+import fileinput
 import multiprocessing
 import os
 import re
@@ -130,20 +131,43 @@ class netgui(Gtk.Window):
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
-
+        
+        # Populate profiles menu
+        profileMenu = self.builder.get_object("profilesMenu")
+        profiles = os.listdir("/etc/netctl/")
+        # Iterate through profiles directory, and add to "Profiles" Menu #
+        #for i in profiles:
+        #    if os.path.isfile("/etc/netctl/" + i):
+        #        profile = profileMenu.set_submenu(i)   
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
-        
+        Notify.init("NetGUI")
             
-        self.interfaceName = GetInterface()
+        self.interfaceName = ""
+        if self.interfaceName == "":
+            n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Wireless running in disabled mode!", "dialog-information")
+            n.show()
+            self.NoWifiScan(None)
+        else:
+            self.startScan(None)
 
         # Start initial scan
-        self.startScan(None)
         window.show_all()
-        Notify.init("NetGUI")
         
-
+        
+    def NoWifiScan(self, e):
+        aps = {}
+        profiles = os.listdir("/etc/netctl/")
+        i = 0
+        for profile in profiles:
+            if os.path.isfile("/etc/netctl/" + profile):
+                aps["row" + str(i)] = self.APStore.append([profile, "", "", ""])
+                self.APStore.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
+                self.APStore.set(aps["row" + str(i)], 2, "N/A.")
+                self.APStore.set(aps["row" + str(i)], 3, "N/A.")
+                i = i + 1
+            
     def onExit(self, e):
         if self.p == None:
             pass
@@ -172,12 +196,6 @@ class netgui(Gtk.Window):
     def checkScan(self):
         self.APStore.clear()
         
-        #os.remove("test_file")
-        #subprocess.call(["wpa_cli", "scan"])
-        #output = CheckOutput("wpa_cli scan_results")
-        #with open("test_file", 'w+') as f:
-        #    f.write(output)
-        #    f.close()
         with open(wpacliFile, 'r') as tsv:
             r = csv.reader(tsv, dialect='excel-tab')
             next(r)
@@ -281,6 +299,11 @@ class netgui(Gtk.Window):
         # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
         # and not destroy it, is it causes another bug where the dialog becomes a small little
         # titlebar box. I don't know how to fix either besides this.
+        def OnLoad(self):
+            f = open("/usr/lib/netgui/interface.cfg", 'r')
+            interfaceEntry.set_text(str(f.read()))
+            f.close()
+            
         def cancelClicked(self):
             print("Cancel Clicked.")
             preferencesDialog.hide()
@@ -288,16 +311,25 @@ class netgui(Gtk.Window):
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
         # and because it makes the program flow more, IMHO
         def saveClicked(self):
-            print("Saving... eventually.")
+            f = open("/usr/lib/netgui/interface.cfg", 'r+')
+            curInt = f.read()
+            f.close()
+            newInt = interfaceEntry.get_text()
+            if newInt != curInt:
+                for line in fileinput.input("/usr/lib/netgui/interface.cfg", inplace=True):
+                    print(newInt)
+            preferencesDialog.hide()
 
         # Get the three things we need from UI.glade
         preferencesDialog = self.builder.get_object("prefDialog")
         saveButton = self.builder.get_object("saveButton")
         cancelButton = self.builder.get_object("cancelButton")
+        interfaceEntry = self.builder.get_object("wiInterface")
 
         # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
+        preferencesDialog.connect("show", OnLoad)
 
         # Opening the Preferences Dialog.
         preferencesDialog.run()
@@ -425,11 +457,18 @@ def CheckGrep(self, grepCmd):
 
 def GetInterface():
     if os.path.isfile(intFile) != True:
-        intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
-        interfaceName = intNameCheck[166:172]
+        #intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
+        #interfaceName = intNameCheck[166:172]
+        devices = os.listdir("/sys/class/net")
+        for device in devices:
+            if "wlp" or "wlan" in device:
+                interfaceName = device
+            else:
+                pass
         f = open(intFile, 'w')
-        f.write(self.interfaceName)
+        f.write(interfaceName)
         f.close()
+        return str(interfaceName).strip()
     else:
         f = open(intFile, 'r')
         interfaceName = f.readline()
