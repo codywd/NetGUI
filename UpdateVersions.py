@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 import fileinput
 
-progVer = "0.6"
+progVer = "0.65"
 # Automatic Glade Version Setter, thanks to Dane White
 # at the Stack Overflow forums!
 class ProgramProperties(object):

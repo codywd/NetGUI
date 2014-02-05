@@ -1,4 +1,4 @@
-0.7
+0.65
 1. Manually change interface via preferences dialog.
 2. Profiles menu now states all currently created profiles.
 3. No wireless card? Disabled it? NetGUI still functions, just not with 
