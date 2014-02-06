@@ -471,7 +471,7 @@ def get_network_pw(parent, message, title=''):
     response = dialogWindow.run()
     text = userEntry.get_text() 
     dialogWindow.destroy()
-    if (response == Gtk.ResponseType.OK) and (text != ''):
+    if (response == Gtk.ResponseType.OK):
         return text
     else:
         return None
@@ -485,14 +485,18 @@ def CheckGrep(self, grepCmd):
 
 def GetInterface():
     if os.path.isfile(intFile) != True:
-        #intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
-        #interfaceName = intNameCheck[166:172]
+        
         devices = os.listdir("/sys/class/net")
         for device in devices:
             if "wlp" or "wlan" in device:
                 interfaceName = device
             else:
                 pass
+        if interfaceName == "":
+            intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
+            interfaceName = intNameCheck[166:172]     
+        if interfaceName == "":
+            interfaceName = get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
         f = open(intFile, 'w')
         f.write(interfaceName)
         f.close()
