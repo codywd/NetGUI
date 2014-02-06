@@ -1,11 +1,9 @@
-# NetGUI v0.1
+# NetGUI v0.65
 
 NetGUI is an official fork of what was originally known as WiFiz. NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.
 
 ## General Notes
-NetGUI is in alpha state, even more so than the generally stable WiFiz. NetGUI is a rewrite from scratch of WiFiz, to take advantage of Python3 and GTK+3. As such, NetGUI is in a very volatile state, I recommend using WiFiz for the time being.
-
-In fact, NetGUI is not functional, while WiFiz is. Why use an unfunctional program when my nearly identical program is functional?
+NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take advantage of Python3 and GTK+3. NetGUI is generally considered stable now, and should be as functional, if not more so, than WiFiz. We are still developing, so be prepared for a break in this program for now (I recommend you know netctl's syntax.)
 
 ## Why fork WiFiz into NetGUI?
 1. Wifiz is not very clean. The code is jumbled and not easy to maintain.
@@ -16,5 +14,5 @@ In fact, NetGUI is not functional, while WiFiz is. Why use an unfunctional progr
 ## Dependencies
 1. Python3
 2. python-gobject
-3. wireless-tools
 4. netctl
+5. notify-osd

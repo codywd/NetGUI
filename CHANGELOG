@@ -1,0 +1,29 @@
+0.66
+1. Finishing touches on No wifi Mode.
+
+0.65
+1. Manually change interface via preferences dialog.
+2. Profiles menu now states all currently created profiles.
+3. No wireless card? Disabled it? NetGUI still functions, just not with 
+the same abilities.
+
+0.6 
+1. Removed dependency for wireless-tools
+2. Changed scanning method to wpa_cli
+
+Known Issues for 0.6:
+1. Sometimes, a blank network will appear. I'm working on figuring out how to avoid this.
+
+0.5
+1. Updated PKGBUILD
+2. Changed Quality from fractions to percenteges.
+3. Fixed netgui script to actually work.
+4. Fixed setup.py to correctly install the various items.
+5. Added notifications to the program.
+6. Added new dependency: notify-osd
+
+0.4
+1. Changed NetCTL to use "_" inbetween it's name and the name of the network when creating a profile, instead of "-", because of how systemd treats "-" as a special character.
+2. Fixed a bug where every network was either "Open" or "WEP." It now correctly states "WPA" if that is what it is.
+3. Fixed the column layout. Basically, "Connection Quality" listed the security type, and "Security Type" listed the connection quality.
+4. Fixed the "Connected?" column to correctly state if you are connected to a network.
