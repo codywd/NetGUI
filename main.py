@@ -146,7 +146,7 @@ class netgui(Gtk.Window):
         # it doesn't work, I will re-implement the old way.
         Notify.init("NetGUI")
             
-        self.interfaceName = ""
+        self.interfaceName = GetInterface()
         if self.interfaceName == "":
             n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
             n.show()
