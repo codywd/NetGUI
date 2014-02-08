@@ -22,6 +22,7 @@ progVer = "0.65"
 conf_dir = "/etc/netctl/"
 statusDir = "/usr/lib/netgui/"
 progLoc = "/usr/share/netgui/"
+profile_prefix = "netgui_"
 intFile = statusDir + "interface.cfg"
 license_dir = '/usr/share/licenses/netgui/'
 iwconfigFile = statusDir + "iwlist.log"
@@ -246,7 +247,7 @@ class netgui(Gtk.Window):
                     self.APStore.set(aps["row" + str(i)], 3, "No")
                 else:
                     connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
-                    if network in connectedNetwork:
+                    if SSIDToProfileName(network) == connectedNetwork:
                         self.APStore.set(aps["row" + str(i)], 3, "Yes")
                     else:
                         self.APStore.set(aps["row" + str(i)], 3, "No")              
@@ -257,7 +258,7 @@ class netgui(Gtk.Window):
         if self.NoWifiMode == 0:
             select = self.APList.get_selection()
             networkSSID = self.getSSID(select)
-            profile = "netgui_" + networkSSID
+            profile = SSIDToProfileName(networkSSID)
             netinterface = GetInterface()
             if os.path.isfile(conf_dir + profile):
                 InterfaceCtl.down(self, netinterface)
@@ -418,6 +419,9 @@ class InterfaceCtl(object):
     def up(self, interface):
         print("interface:: up: " + interface)
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
+
+def SSIDToProfileName(ssid):
+    return profile_prefix + ssid
 
 def CreateConfig(name, interface, security, key, ip='dhcp'):
     print("Creating Profile! Don't interrupt!\n")
