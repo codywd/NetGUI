@@ -184,7 +184,6 @@ class netgui(Gtk.Window):
             pass
         else:
             self.p.terminate()
-        sys.exit()
         Gtk.main_quit()
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
@@ -524,11 +523,13 @@ def cleanup():
     fp.close()
 
 if __name__ == "__main__":
-    Gdk.threads_init()
-    Gdk.threads_enter()
-    netgui()
-    Gdk.threads_leave()
-    Gtk.main()
-    # cleanup after everything is done.
-    # Or the pidFile will be removed when starting up..
-    cleanup()
+    try:
+        Gdk.threads_init()
+        Gdk.threads_enter()
+        netgui()
+        Gdk.threads_leave()
+        Gtk.main()
+    except:
+        pass
+    finally:
+        cleanup()
