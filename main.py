@@ -54,13 +54,16 @@ if euid != 0:
     sys.exit(77)
 
 # Let's also not allow any more than one instance of netgui.
-fp = open(pidFile, 'w')
+# Note that the builtin open will truncate the file even if it's already locked.
+# We must use os.open to avoid the behavior and truncate it later.
+fp = os.fdopen(os.open(pidFile, os.O_CREAT | os.O_WRONLY), 'w')
 try:
-    fcntl.lockf(fp, fcntl.LOCK_EX|fcntl.LOCK_NB)
+    fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
 except IOError:
     print("We only allow one instance of netgui to be running at a time for precautionary reasons.")
     sys.exit(1)
 
+fp.truncate()
 fp.write(str(pidNumber)+"\n")
 fp.flush()
 
@@ -510,19 +513,22 @@ def GetInterface():
 
 def cleanup():
     # Clean up time
-    fcntl.lockf(fp, fcntl.LOCK_UN)
-    fp.close()
-    os.unlink(pidFile)
     try:
         os.unlink(iwlistFile)
         os.unlink(iwconfigFile)
     except:
         pass
+    # To avoid race condition, we should unlink pidFile before unlock
+    os.unlink(pidFile)
+    fcntl.lockf(fp, fcntl.LOCK_UN)
+    fp.close()
 
 if __name__ == "__main__":
-    cleanup()
     Gdk.threads_init()
     Gdk.threads_enter()
     netgui()
     Gdk.threads_leave()
     Gtk.main()
+    # cleanup after everything is done.
+    # Or the pidFile will be removed when starting up..
+    cleanup()
