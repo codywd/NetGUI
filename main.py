@@ -334,6 +334,20 @@ class netgui(Gtk.Window):
             interfaceEntry.set_text(str(f.read()))
             f.close()
             
+        def profBrowseClicked(self):
+            dialog = Gtk.FileChooserDialog("Please Choose Your Profile", self,
+                                           Gtk.FileChooserAction.OPEN,
+                                           (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                                            Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+            
+            response = dialog.run()
+            if response == Gtk.ResponseType.OK:
+                defaultProfName.set_text(dialog.get_filename())
+            elif response == Gtk.ResponseType.CANCEL:
+                pass
+            
+            dialog.destroy()
+            
         def cancelClicked(self):
             print("Cancel Clicked.")
             preferencesDialog.hide()
@@ -350,15 +364,18 @@ class netgui(Gtk.Window):
                     print(newInt)
             preferencesDialog.hide()
 
-        # Get the three things we need from UI.glade
+        # Get the things we need from UI.glade
         preferencesDialog = self.builder.get_object("prefDialog")
         saveButton = self.builder.get_object("saveButton")
         cancelButton = self.builder.get_object("cancelButton")
         interfaceEntry = self.builder.get_object("wiInterface")
-
+        defaultProfBrowse = self.builder.get_object("fileChooser")
+        defaultProfName = self.builder.get_object("defaultProfilePath")
+        
         # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
+        defaultProfBrowse.connect("clicked", profBrowseClicked)
         preferencesDialog.connect("show", OnLoad)
 
         # Opening the Preferences Dialog.
