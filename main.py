@@ -89,7 +89,7 @@ class netgui(Gtk.Window):
 
         # Grab the "window1" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
-        window.connect("delete-event", Gtk.main_quit)
+        window.connect("delete-event", self.onExit)
 
         # Get the OnScan button in case we are going to run in NoWifiMode
         ScanButton = self.builder.get_object("scanAPsTool")
@@ -182,12 +182,13 @@ class netgui(Gtk.Window):
                 self.APStore.set(aps["row" + str(i)], 3, "N/A.")
                 i = i + 1
             
-    def onExit(self, e):
+    def onExit(self, widget=None, event=None, data=None):
         if self.p == None:
             pass
         else:
             self.p.terminate()
         Gtk.main_quit()
+        return True
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
     def startScan(self, e):
