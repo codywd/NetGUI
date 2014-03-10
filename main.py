@@ -139,12 +139,14 @@ class netgui(Gtk.Window):
         self.builder.connect_signals(handlers)
         
         # Populate profiles menu
+        menu = self.builder.get_object("menubar1")
         profileMenu = self.builder.get_object("profilesMenu")
+        profileMenu.set_submenu(Gtk.Menu())
         profiles = os.listdir("/etc/netctl/")
         # Iterate through profiles directory, and add to "Profiles" Menu #
-        #for i in profiles:
-        #    if os.path.isfile("/etc/netctl/" + i):
-        #        profile = profileMenu.set_submenu(i)   
+        for i in profiles:
+            if os.path.isfile("/etc/netctl/" + i):
+                profile = profileMenu.get_submenu().append(Gtk.MenuItem(label=i))   
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
@@ -556,7 +558,7 @@ if __name__ == "__main__":
         netgui()
         Gdk.threads_leave()
         Gtk.main()
-    except:
-        pass
+    except Exception as e:
+        print(e)
     finally:
         cleanup()
