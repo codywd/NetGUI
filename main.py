@@ -366,6 +366,9 @@ class netgui(Gtk.Window):
                 for line in fileinput.input("/usr/lib/netgui/interface.cfg", inplace=True):
                     print(newInt)
             preferencesDialog.hide()
+            
+        def CloseClicked(self):
+            preferencesDialog.hide()
 
         # Get the things we need from UI.glade
         preferencesDialog = self.builder.get_object("prefDialog")
@@ -380,6 +383,7 @@ class netgui(Gtk.Window):
         cancelButton.connect("clicked", cancelClicked)
         defaultProfBrowse.connect("clicked", profBrowseClicked)
         preferencesDialog.connect("show", OnLoad)
+        preferencesDialog.connect("delete-event", CloseClicked)
 
         # Opening the Preferences Dialog.
         preferencesDialog.run()
