@@ -161,12 +161,12 @@ class netgui(Gtk.Window):
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
-        Notify.init("NetGUI")
+        # Notify.init("NetGUI")
             
         self.interfaceName = GetInterface()
         if self.interfaceName == "":
-            n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
-            n.show()
+            # n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
+            # n.show()
             self.NoWifiScan(None)
             self.NoWifiMode = 1
             ScanButton.props.sensitive = False
