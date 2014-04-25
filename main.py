@@ -17,47 +17,58 @@ import webbrowser
 from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
-# Setting base app information, such as version, and configuration directories/files.
-progVer = "0.65"
-conf_dir = "/etc/netctl/"
-statusDir = "/usr/lib/netgui/"
-progLoc = "/usr/share/netgui/"
-profile_prefix = "netgui_"
-intFile = statusDir + "interface.cfg"
-license_dir = '/usr/share/licenses/netgui/'
-iwconfigFile = statusDir + "iwlist.log"
-wpacliFile = statusDir + "wpa_cli.log"
-iwlistFile = statusDir + "iwlist.log"
-pidFile = statusDir + "program.pid"
-imgLoc = "/usr/share/netgui/imgs"
-prefFile = statusDir + "preferences.cfg"
-pidNumber = os.getpid()
+# Setting base app information, such as version, and configuration 
+# directories/files.
 
-# Allows for command line arguments. Currently only a "Help" argument, but more to come.
+if os.path.dirname(os.path.realpath(__file__)) is not '/usr/share/netgui':
+    # We'll store logs here instead
+    status_directiory = os.path.dirname(os.path.realpath(__file__))
+    config_directiory = os.getcwd()
+else:
+    status_directiory = '/usr/share/netgui'
+    config_directiory = "/etc/netctl"
+    if not os.path.exists(status_directiory):
+        if not subprocess.call("mkdir -p " + status_directiory, shell=True):
+            print("couldn't get a working directory")
+            sys.exit(2)
+
+
+program_version   = "0.65"
+program_location  = os.path.dirname(os.path.realpath(__file__))
+profile_prefix    = "/netgui_"
+preferences_file  = status_directiory + "/preferences.cfg"
+interface_file    = status_directiory + "/interface.cfg"
+iwconfig_file     = status_directiory + "/iwlist.log"
+iwlist_file       = status_directiory + "/iwlist.log"
+wpa_cli_file      = status_directiory + "/wpa_cli.log"
+pid_file          = status_directiory + "/program.pid"
+imgs_directiory   = "/usr/share/netgui/imgs"
+license_directory = '/usr/share/licenses/netgui'
+pid_number        = os.getpid()
+
+# Allows for command line arguments. Currently only a "Help" argument, 
+# but more to come.
 # TODO import ext libary to handel this for us
 for arg in sys.argv:
     if arg == '--help' or arg == '-h':
-        print("netgui; The NetCTL GUI! \nWe need root :)")
+        print("netgui The NetCTL GUI!\nNot very helpful we know, comming soon?")
         sys.exit(0)
     if arg == '--version' or arg == '-v':
-        print("Your netgui version is " + progVer + ".")
+        print("Your netgui version is " + program_version + ".")
         sys.exit(0)
 
-if os.path.exists(statusDir):
-    pass
-else:
-    subprocess.call("mkdir " + statusDir, shell=True)
+
 
 # Let's make sure we're root, while at it.
 euid = os.geteuid()
 if euid != 0:
-    print("netgui NEEDS to be run as root, since many commands we use requires it.\nPlease sudo or su -c and try again.")
+    print("netgui requries root to run.\nPlease sudo or su -c and try again.")
     sys.exit(77)
 
 # Let's also not allow any more than one instance of netgui.
 # Note that the builtin open will truncate the file even if it's already locked.
 # We must use os.open to avoid the behavior and truncate it later.
-fp = os.fdopen(os.open(pidFile, os.O_CREAT | os.O_WRONLY), 'w')
+fp = os.fdopen(os.open(pid_file, os.O_CREAT | os.O_WRONLY), 'w')
 try:
     fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
 except IOError:
@@ -65,7 +76,7 @@ except IOError:
     sys.exit(1)
 
 fp.truncate()
-fp.write(str(pidNumber)+"\n")
+fp.write(str(pid_number)+"\n")
 fp.flush()
 
 # The main class of netgui. Nifty name, eh?
@@ -80,7 +91,7 @@ class netgui(Gtk.Window):
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(progLoc + "UI.glade")
+        self.builder.add_from_file(program_location + "/UI.glade")
 
         # Init Vars
         self.scanning = False
@@ -142,10 +153,10 @@ class netgui(Gtk.Window):
         menu = self.builder.get_object("menubar1")
         profileMenu = self.builder.get_object("profilesMenu")
         profileMenu.set_submenu(Gtk.Menu())
-        profiles = os.listdir("/etc/netctl/")
+        profiles = os.listdir(config_directiory)
         # Iterate through profiles directory, and add to "Profiles" Menu #
         for i in profiles:
-            if os.path.isfile("/etc/netctl/" + i):
+            if os.path.isfile(config_directiory + i):
                 profile = profileMenu.get_submenu().append(Gtk.MenuItem(label=i))   
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If
@@ -171,11 +182,11 @@ class netgui(Gtk.Window):
         
     def NoWifiScan(self, e):
         aps = {}
-        profiles = os.listdir("/etc/netctl/")
+        profiles = os.listdir(config_directiory)
         i = 0
         NoWifiMode = 1
         for profile in profiles:
-            if os.path.isfile("/etc/netctl/" + profile):
+            if os.path.isfile(config_directiory + profile):
                 aps["row" + str(i)] = self.APStore.append([profile, "", "", ""])
                 self.APStore.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
                 self.APStore.set(aps["row" + str(i)], 2, "N/A.")
@@ -263,8 +274,8 @@ class netgui(Gtk.Window):
             networkSSID = self.getSSID(select)
             profile = SSIDToProfileName(networkSSID)
             netinterface = GetInterface()
-            if os.path.isfile(conf_dir + profile):
-                InterfaceCtl.down(self, netinterface)
+            if os.path.isfile(config_directiory + profile):
+                InterfaceCtl.down(status_directiory, netinterface)
                 NetCTL.stopall(self)
                 NetCTL.start(self, profile)
                 n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
@@ -333,7 +344,7 @@ class netgui(Gtk.Window):
         # and not destroy it, is it causes another bug where the dialog becomes a small little
         # titlebar box. I don't know how to fix either besides this.
         def OnLoad(self):
-            f = open("/usr/lib/netgui/interface.cfg", 'r')
+            f = open(interface_file, 'r')
             interfaceEntry.set_text(str(f.read()))
             f.close()
             
@@ -358,13 +369,11 @@ class netgui(Gtk.Window):
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
         # and because it makes the program flow more, IMHO
         def saveClicked(self):
-            f = open("/usr/lib/netgui/interface.cfg", 'r+')
-            curInt = f.read()
-            f.close()
-            newInt = interfaceEntry.get_text()
-            if newInt != curInt:
-                for line in fileinput.input("/usr/lib/netgui/interface.cfg", inplace=True):
-                    print(newInt)
+            with open(interface_file, 'r+') as f:
+                interface = f.read()
+                new_interface = interfaceEntry.get_text()
+                if new_interface is not interface:
+                    GetInterface(new_interface)
             preferencesDialog.hide()
             
         def CloseClicked(self):
@@ -430,17 +439,17 @@ class NetCTL(object):
         subprocess.call(["netctl", "restart", profile])
 
 class InterfaceCtl(object):
-    # Control the network interface, a.k.a wlan0 or eth0
-    # etc...
-
+    '''Control the network interface, a.k.a wlan0 or eth0 etc...'''
     def __init__(self):
-        super(InterfaceCtl, self).__init__()
+        pass
 
     def down(self, interface):
+        '''put interface down'''
         print("interface:: down: " + interface)
         subprocess.call(["ip", "link", "set", "down", "dev", interface])
 
     def up(self, interface):
+        '''bring interface up'''
         print("interface:: up: " + interface)
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
 
@@ -456,8 +465,8 @@ def CreateConfig(ssid, interface, security, key, ip='dhcp'):
         security = 'wep'
     else:
         security = 'none'
-    f = open(conf_dir + filename, 'w')
-    f.write("Description='This profile was generated by netgui for " + str(ssid)+".'\n" +
+    f = open(config_directiory + filename, 'w')
+    f.write("status_directiory='This profile was generated by netgui for " + str(ssid)+".'\n" +
             "Interface=" + str(interface) + "\n" +
             "Connection=wireless\n" +
             "Security=" + str(security) + "\n" +
@@ -547,12 +556,12 @@ def GetInterface():
 def cleanup():
     # Clean up time
     try:
-        os.unlink(iwlistFile)
-        os.unlink(iwconfigFile)
+        os.unlink(iwlist_file)
+        os.unlink(iwconfig_file)
     except:
         pass
-    # To avoid race condition, we should unlink pidFile before unlock
-    os.unlink(pidFile)
+    # To avoid race condition, we should unlink pid_file before unlock
+    os.unlink(pid_file)
     fcntl.lockf(fp, fcntl.LOCK_UN)
     fp.close()
 
