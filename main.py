@@ -362,7 +362,7 @@ class netgui(Gtk.Window):
             dialog.destroy()
             
         def cancelClicked(self):
-            print("Cancel Clicked.")
+            # print("Cancel Clicked.")
             preferencesDialog.hide()
 
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
@@ -375,7 +375,7 @@ class netgui(Gtk.Window):
                     GetInterface(new_interface)
             preferencesDialog.hide()
             
-        def CloseClicked(self):
+        def CloseClicked(self, gtkevent):
             preferencesDialog.hide()
 
         # Get the things we need from UI.glade
