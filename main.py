@@ -210,18 +210,17 @@ class netgui(Gtk.Window):
         
     def onScan(self, e=None):
         print("Please wait! Now Scanning.")
-        wpacliFileHandler = open(wpacliFile, 'w')
-        InterfaceCtl.up(self, self.interfaceName)
-        subprocess.call(["wpa_cli", "scan"])
-        output=CheckOutput(self, "wpa_cli scan_results")
-        wpacliFileHandler.write(output)
-        wpacliFileHandler.close()
+        with open(wpa_cli_file, 'w') as f:
+            InterfaceCtl.up(self, self.interfaceName)
+            subprocess.call(["wpa_cli", "scan"])
+            output=CheckOutput(self, "wpa_cli scan_results")
+            f.write(output)
         print("Done Scanning!")
     
     def checkScan(self):
         self.APStore.clear()
         
-        with open(wpacliFile, 'r') as tsv:
+        with open(wpa_cli_file, 'r') as tsv:
             r = csv.reader(tsv, dialect='excel-tab')
             next(r)
             next(r)
