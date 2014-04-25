@@ -104,7 +104,7 @@ class netgui(Gtk.Window):
 
         # Get the OnScan button in case we are going to run in NoWifiMode
         ScanButton = self.builder.get_object("scanAPsTool")
-        
+
         # Setup the main area of netgui: The network list.
         self.APList = self.builder.get_object("treeview1")
         self.APStore = Gtk.ListStore(str, str, str, str)
@@ -148,7 +148,7 @@ class netgui(Gtk.Window):
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
-        
+
         # Populate profiles menu
         menu = self.builder.get_object("menubar1")
         profileMenu = self.builder.get_object("profilesMenu")
@@ -162,7 +162,7 @@ class netgui(Gtk.Window):
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
         # Notify.init("NetGUI")
-            
+
         self.interfaceName = GetInterface()
         if self.interfaceName == "":
             # n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
@@ -178,8 +178,7 @@ class netgui(Gtk.Window):
 
         # Start initial scan
         window.show_all()
-        
-        
+
     def NoWifiScan(self, e):
         aps = {}
         profiles = os.listdir(config_directiory)
@@ -192,7 +191,7 @@ class netgui(Gtk.Window):
                 self.APStore.set(aps["row" + str(i)], 2, "N/A.")
                 self.APStore.set(aps["row" + str(i)], 3, "N/A.")
                 i = i + 1
-            
+
     def onExit(self, widget=None, event=None, data=None):
         if self.p == None:
             pass
@@ -207,7 +206,7 @@ class netgui(Gtk.Window):
         self.p.start()
         self.p.join()
         self.checkScan()
-        
+
     def onScan(self, e=None):
         print("Please wait! Now Scanning.")
         with open(wpa_cli_file, 'w') as f:
@@ -216,10 +215,10 @@ class netgui(Gtk.Window):
             output=CheckOutput(self, "wpa_cli scan_results")
             f.write(output)
         print("Done Scanning!")
-    
+
     def checkScan(self):
         self.APStore.clear()
-        
+
         with open(wpa_cli_file, 'r') as tsv:
             r = csv.reader(tsv, dialect='excel-tab')
             next(r)
@@ -231,7 +230,7 @@ class netgui(Gtk.Window):
                 if network == "":
                     next(r)
                 aps["row" + str(i)] = self.APStore.append([network, "", "", ""])   
-                
+
                 quality = row[2]
                 if int(quality) <= -100:
                     percent = "0%"
@@ -241,7 +240,7 @@ class netgui(Gtk.Window):
                     fquality = (2 * (int(quality) + 100))
                     percent = str(fquality) + "%"
                 self.APStore.set(aps["row" + str(i)], 1, percent)
-                
+
                 security = row[3]
                 if "WPA" and "PSK" and not "TKIP" in security:
                     encryption = "WPA2-PSK"
@@ -254,8 +253,7 @@ class netgui(Gtk.Window):
                 else:
                     encryption = "Unknown"
                 self.APStore.set(aps["row" + str(i)], 2, encryption)
-                
-                
+
                 if IsConnected() == False:
                     self.APStore.set(aps["row" + str(i)], 3, "No")
                 else:
@@ -312,8 +310,7 @@ class netgui(Gtk.Window):
                 n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                 n.show()
                 Notify.uninit()   
-            
-    
+
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter != None:
@@ -336,7 +333,7 @@ class netgui(Gtk.Window):
         self.startScan(None)
         n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + networkSSID, "dialog-information")
         n.show()        
-        
+
     def prefClicked(self, menuItem):
         # Setting up the cancel function here fixes a wierd bug where, if outside of the prefClicked function
         # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
@@ -346,21 +343,21 @@ class netgui(Gtk.Window):
             f = open(interface_file, 'r')
             interfaceEntry.set_text(str(f.read()))
             f.close()
-            
+
         def profBrowseClicked(self):
             dialog = Gtk.FileChooserDialog("Please Choose Your Profile", self,
                                            Gtk.FileChooserAction.OPEN,
                                            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                                             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-            
+
             response = dialog.run()
             if response == Gtk.ResponseType.OK:
                 defaultProfName.set_text(dialog.get_filename())
             elif response == Gtk.ResponseType.CANCEL:
                 pass
-            
+
             dialog.destroy()
-            
+
         def cancelClicked(self):
             # print("Cancel Clicked.")
             preferencesDialog.hide()
@@ -374,7 +371,7 @@ class netgui(Gtk.Window):
                 if new_interface is not interface:
                     GetInterface(new_interface)
             preferencesDialog.hide()
-            
+
         def CloseClicked(self, gtkevent):
             preferencesDialog.hide()
 
@@ -385,7 +382,7 @@ class netgui(Gtk.Window):
         interfaceEntry = self.builder.get_object("wiInterface")
         defaultProfBrowse = self.builder.get_object("fileChooser")
         defaultProfName = self.builder.get_object("defaultProfilePath")
-        
+
         # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
