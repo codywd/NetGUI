@@ -180,6 +180,7 @@ class netgui(Gtk.Window):
         window.show_all()
 
     def NoWifiScan(self, e):
+        '''Disables wifi scanning for wired connections'''
         aps = {}
         profiles = os.listdir(config_directiory)
         i = 0
@@ -193,6 +194,7 @@ class netgui(Gtk.Window):
                 i = i + 1
 
     def onExit(self, widget=None, event=None, data=None):
+        '''kills main()'''
         if self.p == None:
             pass
         else:
@@ -202,6 +204,7 @@ class netgui(Gtk.Window):
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
     def startScan(self, e):
+        '''call the scanning functions'''
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
         self.p.join()
@@ -217,6 +220,7 @@ class netgui(Gtk.Window):
         print("Done Scanning!")
 
     def checkScan(self):
+        '''get results of the scan... I think...'''
         self.APStore.clear()
 
         with open(wpa_cli_file, 'r') as tsv:
@@ -265,6 +269,7 @@ class netgui(Gtk.Window):
                 i=i+1
 
     def connectClicked(self, menuItem):
+        '''process a connection request from the user'''
         print(str(self.NoWifiMode))
         if self.NoWifiMode == 0:
             select = self.APList.get_selection()
