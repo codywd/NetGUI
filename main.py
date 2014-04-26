@@ -81,7 +81,7 @@ class netgui(Gtk.Window):
 
     # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
     def InitUI(self):
-
+        
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
@@ -200,13 +200,13 @@ class netgui(Gtk.Window):
     def checkScan(self):
         '''get results of the scan... I think...'''
         self.APStore.clear()
-
+        current_bssid = self.network_status('bssid')
         with open(wpa_cli_file, 'r') as seenAPs:
             APList = []
             for row in seenAPs:
                 APList.append(row.split('\t',4))
-                # bssid / freq / power / opts / essid
             for AP in APList:
+                # bssid / freq / power / opts / essid
                 if len(AP) < 4:
                     continue
                 essid = AP[4]
@@ -214,8 +214,27 @@ class netgui(Gtk.Window):
                     essid = AP[0]
                 power = str(((int(AP[2])*2)+200))+'%'
                 opts = AP[3].strip('[]').replace('][', ' and ').rstrip(' and ESS')
-                connected = "unknown" # TODO use wpa_cli to verify bssid
+                if current_bssid:
+                    if current_bssid == AP[0]:
+                        connected = 'Yes'
+                    else:
+                        connected = 'No'
+                else:
+                    connected = "unknown"
                 self.APStore.append([essid, power, opts, connected])
+        return True
+
+    def network_status(self, req=None):
+        status = subprocess.check_output(['wpa_cli', 'status']).decode("utf-8")
+        if req is None:
+            return status
+        else:
+            result = status.split('\n')
+            for line in result:
+                line = line.split('=',1)
+                if line[0] == req:
+                    return line[1]
+        return False
 
     def connectClicked(self, menuItem):
         '''process a connection request from the user'''
