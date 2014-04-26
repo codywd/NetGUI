@@ -1,7 +1,6 @@
 #! /usr/bin/python3
 
 # Import Standard Libraries
-import csv
 import fcntl
 import fileinput
 import multiprocessing
@@ -223,50 +222,21 @@ class netgui(Gtk.Window):
         '''get results of the scan... I think...'''
         self.APStore.clear()
 
-        with open(wpa_cli_file, 'r') as tsv:
-            r = csv.reader(tsv, dialect='excel-tab')
-            next(r)
-            next(r)
-            aps = {}
-            i = 0
-            for row in r:                
-                network = row[4]            
-                if network == "":
-                    next(r)
-                aps["row" + str(i)] = self.APStore.append([network, "", "", ""])   
-
-                quality = row[2]
-                if int(quality) <= -100:
-                    percent = "0%"
-                elif int(quality) >= -50:
-                    percent = "100%"
-                else:
-                    fquality = (2 * (int(quality) + 100))
-                    percent = str(fquality) + "%"
-                self.APStore.set(aps["row" + str(i)], 1, percent)
-
-                security = row[3]
-                if "WPA" and "PSK" and not "TKIP" in security:
-                    encryption = "WPA2-PSK"
-                elif "WPA" and "TKIP" in security:
-                    encryption = "WPA2-TKIP"
-                elif "OPENSSID" in security:
-                    encryption = "Open"
-                elif "WEP" in security:
-                    encryption = "WEP"
-                else:
-                    encryption = "Unknown"
-                self.APStore.set(aps["row" + str(i)], 2, encryption)
-
-                if IsConnected() == False:
-                    self.APStore.set(aps["row" + str(i)], 3, "No")
-                else:
-                    connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
-                    if SSIDToProfileName(network) == connectedNetwork:
-                        self.APStore.set(aps["row" + str(i)], 3, "Yes")
-                    else:
-                        self.APStore.set(aps["row" + str(i)], 3, "No")              
-                i=i+1
+        with open(wpa_cli_file, 'r') as seenAPs:
+            APList = []
+            for row in seenAPs:
+                APList.append(row.split('\t',4))
+                # bssid / freq / power / opts / essid
+            for AP in APList:
+                if len(AP) < 4:
+                    continue
+                essid = AP[4]
+                if essid is ('' or '\n'):
+                    essid = AP[0]
+                power = str(((int(AP[2])*2)+200))+'%'
+                opts = AP[3].strip('[]').replace('][', ' and ').rstrip(' and ESS')
+                connected = "unknown" # TODO use wpa_cli to verify bssid
+                self.APStore.append([essid, power, opts, connected])
 
     def connectClicked(self, menuItem):
         '''process a connection request from the user'''
