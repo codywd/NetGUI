@@ -411,19 +411,31 @@ class NetCTL(object):
 
 class network_interface:
     '''Control the network interface, a.k.a wlan0 or eth0 etc...'''
-    def __init__(self):
-        pass
+    def __init__(self, interface=None):
+        if interface:
+            self.interface = interface
+            self.state = self.status()
+        else:
+            self.state = None
+            self.interface = None
 
-    def down(self, interface):
+    def down(self, interface=None):
         '''put interface down'''
+        if not interface:
+            interface = self.interface
         subprocess.call(["ip", "link", "set", "down", "dev", interface])
 
-
-    def up(self, interface):
+    def up(self, interface=None):
         '''bring interface up'''
+        if not interface:
+            interface = self.interface
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
 
-    def status(self, interface, guess=None):
+    def status(self, interface=None, guess=None):
+        '''get the current status of interface'''
+        if not interface:
+            interface = self.interface
+
         ip_link = subprocess.check_output(["ip", "link", "show", interface])
         ip_link = ip_link.decode("utf-8")
         if 'state UP' in ip_link:
@@ -433,6 +445,8 @@ class network_interface:
         else:
             state = 'unknown'
         if guess is not None:
+            if self.interface is not None:
+                self.state = state
             return state
         else:
             if guess == state:
