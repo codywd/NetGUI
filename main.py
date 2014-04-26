@@ -188,7 +188,7 @@ class netgui(Gtk.Window):
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
         self.p.join()
-        self.checkScan()
+        self.refresh_APlist()
 
     def onScan(self, e=None):
         with open(wpa_cli_file, 'w') as f:
@@ -197,7 +197,7 @@ class netgui(Gtk.Window):
             output=CheckOutput(self, "wpa_cli scan_results")
             f.write(output)
 
-    def checkScan(self):
+    def refresh_APlist(self):
         '''get results of the scan... I think...'''
         self.APStore.clear()
         current_bssid = self.network_status('bssid')
@@ -282,6 +282,7 @@ class netgui(Gtk.Window):
                 n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                 n.show()
                 Notify.uninit()   
+        self.refresh_APlist()
 
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
