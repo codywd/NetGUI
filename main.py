@@ -1,16 +1,11 @@
 #! /usr/bin/python3
 
 # Import Standard Libraries
-import fcntl
-import fileinput
-import multiprocessing
-import os
-import re
+import fcntl, os, re, sys, time
 import subprocess
-import sys
 import threading
-import time
-import webbrowser
+import multiprocessing
+# import webbrowser
 
 # Import Third Party Libraries
 from gi.repository import Gtk, Gdk, GObject, GLib
@@ -364,7 +359,9 @@ class netgui(Gtk.Window):
     def reportIssue(self, menuItem):
         # Why would I need a local way of reporting issues when I can use github? Exactly.
         # And since no more dependencies are caused by this, I have no problems with it.
-        webbrowser.open("https://github.com/codywd/NetGUI/issues")
+        pass
+        # webbrowser.open("https://github.com/codywd/NetGUI/issues")
+        # disabled, don't open a webbrowser as root, WTF?
 
     def aboutClicked(self, menuItem):
         # Getting the about dialog from UI.glade
