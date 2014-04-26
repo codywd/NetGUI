@@ -81,7 +81,7 @@ class netgui(Gtk.Window):
 
     # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
     def InitUI(self):
-        IsConnected()
+
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
@@ -155,11 +155,9 @@ class netgui(Gtk.Window):
             self.NoWifiScan(None)
             self.NoWifiMode = 1
             ScanButton.props.sensitive = False
-            print(str(self.NoWifiMode))
         else:
             self.startScan(None)
             self.NoWifiMode = 0
-            print(str(self.NoWifiMode))
 
         # Start initial scan
         window.show_all()
@@ -193,13 +191,11 @@ class netgui(Gtk.Window):
         self.checkScan()
 
     def onScan(self, e=None):
-        print("Please wait! Now Scanning.")
         with open(wpa_cli_file, 'w') as f:
             InterfaceCtl.up(self, self.interfaceName)
             subprocess.call(["wpa_cli", "scan"])
             output=CheckOutput(self, "wpa_cli scan_results")
             f.write(output)
-        print("Done Scanning!")
 
     def checkScan(self):
         '''get results of the scan... I think...'''
@@ -223,7 +219,6 @@ class netgui(Gtk.Window):
 
     def connectClicked(self, menuItem):
         '''process a connection request from the user'''
-        print(str(self.NoWifiMode))
         if self.NoWifiMode == 0:
             select = self.APList.get_selection()
             networkSSID = self.getSSID(select)
@@ -401,12 +396,10 @@ class InterfaceCtl(object):
 
     def down(self, interface):
         '''put interface down'''
-        print("interface:: down: " + interface)
         subprocess.call(["ip", "link", "set", "down", "dev", interface])
 
     def up(self, interface):
         '''bring interface up'''
-        print("interface:: up: " + interface)
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
 
 def SSIDToProfileName(ssid):
@@ -434,14 +427,6 @@ def CreateConfig(ssid, interface, security, key, ip='dhcp'):
     f.write("\nIP=dhcp\n")
     f.close()
     print("Alright, I have finished making the profile!")
-
-def IsConnected():
-    # If we are connected to a network, it lists it. Otherwise, it returns nothing (or an empty byte).
-    check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
-    if check == b'':
-        return False
-    else:
-        return True
 
 def CheckOutput(self, command):
     # Run a command, return what it's output was, and convert it from bytes to unicode
@@ -476,13 +461,6 @@ def get_network_pw(parent, message, title=''):
         return text
     else:
         return None
-
-def CheckGrep(self, grepCmd):
-    # Run a grep command, decode it from bytes to unicode, strip it of spaces,
-    # and return it's output.
-    p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
-    output = ((p.communicate()[0]).decode("utf-8")).strip()
-    return output
 
 def GetInterface(setit = None):
     if setit is not None:
