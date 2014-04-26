@@ -244,7 +244,7 @@ class netgui(Gtk.Window):
             profile = SSIDToProfileName(networkSSID)
             netinterface = GetInterface()
             if os.path.isfile(config_directiory + profile):
-                InterfaceCtl.down(status_directiory, netinterface)
+                network_interface.down(status_directiory, netinterface)
                 NetCTL.stopall(self)
                 NetCTL.start(self, profile)
                 n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
@@ -254,7 +254,7 @@ class netgui(Gtk.Window):
                 key = get_network_pw(self, "Please enter network password", "Network Password Required.")
                 CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                 try:
-                    InterfaceCtl.down(self, netinterface)
+                    network_interface.down(self, netinterface)
                     NetCTL.stopall(self)
                     NetCTL.start(self, profile)
                     n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
@@ -273,7 +273,7 @@ class netgui(Gtk.Window):
             NWMprofile = self.getSSID(select)
             netinterface = GetInterface()
             try:
-                InterfaceCtl.down(self, netinterface)
+                network_interface.down(self, netinterface)
                 NetCTL.stopall(self)
                 NetCTL.start(self, NWMprofile)
                 n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + NWMprofile, "dialog-information")
@@ -302,7 +302,7 @@ class netgui(Gtk.Window):
         profile = SSIDToProfileName(networkSSID)
         interfaceName = GetInterface()
         NetCTL.stop(self, profile)
-        InterfaceCtl.down(self, interfaceName)
+        network_interface.down(self, interfaceName)
         self.startScan(None)
         n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + networkSSID, "dialog-information")
         n.show()        
@@ -409,7 +409,7 @@ class NetCTL(object):
         print("netctl:: restart" + network)
         subprocess.call(["netctl", "restart", profile])
 
-class InterfaceCtl(object):
+class network_interface:
     '''Control the network interface, a.k.a wlan0 or eth0 etc...'''
     def __init__(self):
         pass
@@ -418,9 +418,33 @@ class InterfaceCtl(object):
         '''put interface down'''
         subprocess.call(["ip", "link", "set", "down", "dev", interface])
 
+
     def up(self, interface):
         '''bring interface up'''
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
+
+    def status(self, interface, guess=None):
+        ip_link = subprocess.check_output(["ip", "link", "show", interface])
+        ip_link = ip_link.decode("utf-8")
+        if 'state UP' in ip_link:
+            state = True
+        elif 'state DOWN' in ip_link:
+            state = False
+        else:
+            state = 'unknown'
+        if guess is not None:
+            return state
+        else:
+            if guess == state:
+                return True
+            else:
+                return False
+        try:
+            pass
+        except:
+            raise 'Unhandled event in network_interface.status'
+            print('unknown network status')
+            sys.exit(9)
 
 def SSIDToProfileName(ssid):
     return profile_prefix + ssid
