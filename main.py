@@ -177,11 +177,8 @@ class netgui(Gtk.Window):
         NoWifiMode = 1
         for profile in profiles:
             if os.path.isfile(config_directiory + profile):
-                aps["row" + str(i)] = self.APStore.append([profile, "", "", ""])
-                self.APStore.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
-                self.APStore.set(aps["row" + str(i)], 2, "N/A.")
-                self.APStore.set(aps["row" + str(i)], 3, "N/A.")
-                i = i + 1
+                aps["row" + str(i)] = self.APStore.append([profile, 
+                    "N/A in No-Wifi mode.", "N/A", "N/A"])
 
     def onExit(self, widget=None, event=None, data=None):
         '''kills main()'''
