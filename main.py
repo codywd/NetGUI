@@ -148,21 +148,31 @@ class netgui(Gtk.Window):
         # it doesn't work, I will re-implement the old way.
         # Notify.init("NetGUI")
 
-        self.interfaceName = GetInterface()
-        if self.interfaceName == "":
-            # n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
-            # n.show()
-            self.NoWifiScan(None)
-            self.NoWifiMode = 1
-            ScanButton.props.sensitive = False
-        else:
-            self.startScan(None)
-            self.NoWifiMode = 0
+        
+        # self.interfaceName = GetInterface()
+        # if self.interfaceName == "":
+        #     # n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
+        #     # n.show()
+        #     self.NoWifiScan(None)
+        #     self.NoWifiMode = 1
+        #     ScanButton.props.sensitive = False
+        # else:
+        #     self.startScan(None)
+        #     self.NoWifiMode = 0
 
         # Start initial scan
+        pool = multiprocessing.Pool(processes=3)
+        m = multiprocessing.Manager()
+        self.scan_queue = m.Queue()
+        
+        p = multiprocessing.Process(target=wpa_cli_interface._really_scan, 
+            args=(self, self.scan_queue,) )
+        p.daemon = True
+        p.start()
+        # self.startScan()
         window.show_all()
 
-    def NoWifiScan(self, e):
+    def NoWifiScan(self, e=None):
         '''Disables wifi scanning for wired connections'''
         aps = {}
         profiles = os.listdir(config_directiory)
@@ -183,45 +193,33 @@ class netgui(Gtk.Window):
         return True
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
-    def startScan(self, e):
-        '''call the scanning functions'''
-        self.p = multiprocessing.Process(target=self.onScan)
-        self.p.start()
-        self.p.join()
-        self.refresh_APlist()
+    def startScan(self,e=None):
+        wpa_cli_interface.scan(self, self.scan_queue)
 
-    def onScan(self, e=None):
-        with open(wpa_cli_file, 'w') as f:
-            InterfaceCtl.up(self, self.interfaceName)
-            subprocess.call(["wpa_cli", "scan"])
-            output=CheckOutput(self, "wpa_cli scan_results")
-            f.write(output)
-
-    def refresh_APlist(self):
+    def refresh_APlist(self, data):
         '''get results of the scan... I think...'''
         self.APStore.clear()
         current_bssid = self.network_status('bssid')
-        with open(wpa_cli_file, 'r') as seenAPs:
-            APList = []
-            for row in seenAPs:
-                APList.append(row.split('\t',4))
-            for AP in APList:
-                # bssid / freq / power / opts / essid
-                if len(AP) < 4:
-                    continue
-                essid = AP[4]
-                if essid is ('' or '\n'):
-                    essid = AP[0]
-                power = str(((int(AP[2])*2)+200))+'%'
-                opts = AP[3].strip('[]').replace('][', ' and ').rstrip(' and ESS')
-                if current_bssid:
-                    if current_bssid == AP[0]:
-                        connected = 'Yes'
-                    else:
-                        connected = 'No'
+        APList = data.split(r'\n')
+        for row in seenAPs:
+            APList.append(row.split('\t',4))
+        for AP in APList:
+            # bssid / freq / power / opts / essid
+            if len(AP) < 4:
+                continue
+            essid = AP[4]
+            if essid is ('' or '\n'):
+                essid = AP[0]
+            power = str(((int(AP[2])*2)+200))+'%'
+            opts = AP[3].strip('[]').replace('][', ' and ').rstrip(' and ESS')
+            if current_bssid:
+                if current_bssid == AP[0]:
+                    connected = 'Yes'
                 else:
-                    connected = "unknown"
-                self.APStore.append([essid, power, opts, connected])
+                    connected = 'No'
+            else:
+                connected = "unknown"
+            self.APStore.append([essid, power, opts, connected])
         return True
 
     def network_status(self, req=None):
@@ -460,6 +458,38 @@ class network_interface:
             print('unknown network status')
             sys.exit(9)
 
+class wpa_cli_interface:
+    """This class handles the queuing, managment, and emit for scanning for 
+    wifi networks.
+    """
+    def __init__(self):
+        pass
+
+    def scan(self, q):
+        '''make sure the interface we're about to scan on is ready before you 
+        call me'''
+        q.put(1)
+
+        print('scan called')
+
+    def _really_scan(self, queue):
+        '''use wpa_cli to scan for local Access points.'''
+        while True:
+            if queue.get():
+                print(self.refresh_APlist)
+                subprocess.call(["wpa_cli", "scan"])
+                scan = subprocess.check_output(["wpa_cli", "scan_results"])
+                self.emit(scan.decode('utf-8'), self.refresh_APlist)
+            else:
+                time.sleep(1)
+
+    def hold_data(self, data, call):
+        print('hold_data called')
+
+    def emit(self, data, call):
+        call(data)
+            
+
 def SSIDToProfileName(ssid):
     return profile_prefix + ssid
 
@@ -558,13 +588,9 @@ def cleanup():
     fp.close()
 
 if __name__ == "__main__":
-    try:
-        Gdk.threads_init()
-        Gdk.threads_enter()
-        netgui()
-        Gdk.threads_leave()
-        Gtk.main()
-    except Exception as e:
-        print(e)
-    finally:
-        cleanup()
+    Gdk.threads_init()
+    Gdk.threads_enter()
+    netgui()
+    Gdk.threads_leave()
+    Gtk.main()
+    cleanup()
