@@ -113,21 +113,12 @@ class netgui(Gtk.Window):
         # renderer1 = The Cell renderer. Basically allows for text to show.
         # column1 = The actual setup of the column. Arguments = title, CellRenderer, textIndex)
         # Actually append the column to the treeview.
-        SSIDCellRenderer = Gtk.CellRendererText()
-        SSIDColumn = Gtk.TreeViewColumn("SSID", SSIDCellRenderer, text=0)
-        self.APList.append_column(SSIDColumn)
-
-        connectQualityCellRenderer = Gtk.CellRendererText()
-        connectQualityColumn = Gtk.TreeViewColumn("Connection Quality", connectQualityCellRenderer, text=1)
-        self.APList.append_column(connectQualityColumn)
-
-        securityTypeCellRenderer = Gtk.CellRendererText()
-        securityTypeColumn = Gtk.TreeViewColumn("Security Type", securityTypeCellRenderer, text=2)
-        self.APList.append_column(securityTypeColumn)
-
-        connectedCellRenderer = Gtk.CellRendererText()
-        connectedColumn = Gtk.TreeViewColumn("Connected?", connectedCellRenderer, text=3)
-        self.APList.append_column(connectedColumn)
+        network_columns = ["ESSID","Strength","Encryption","Status"]
+        for i in range(len(network_columns)):
+            CellRenderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(network_columns[i], CellRenderer, text=i)
+            column.set_resizable(True)
+            self.APList.append_column(column)
 
         # Set TreeView as Reorderable
         self.APList.set_reorderable(True)
