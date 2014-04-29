@@ -122,14 +122,14 @@ class netgui(Gtk.Window):
 
         # Set all the handlers I defined in glade to local functions.
         handlers = {
-        "onExit": self.onExit,
-        "onAboutClicked": self.aboutClicked,
-        "onScan": self.startScan,
-        "onConnect": self.connectClicked,
-        "onDConnect": self.dConnectClicked,
-        "onPrefClicked": self.prefClicked,
-        "onHelpClicked": self.helpClicked,
-        "onIssueReport": self.reportIssue
+            "onExit": self.onExit,
+            "onAboutClicked": self.aboutClicked,
+            "onScan": self.startScan,
+            "onConnect": self.connectClicked,
+            "onDConnect": self.dConnectClicked,
+            "onPrefClicked": self.prefClicked,
+            "onHelpClicked": self.helpClicked,
+            "onIssueReport": self.reportIssue
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
@@ -599,10 +599,14 @@ def cleanup():
     fcntl.lockf(fp, fcntl.LOCK_UN)
     fp.close()
 
-if __name__ == "__main__":
+def main():
+    global gui
     Gdk.threads_init()
     Gdk.threads_enter()
-    netgui()
+    gui = netgui()
     Gdk.threads_leave()
     Gtk.main()
+
+if __name__ == "__main__":
+    main()
     cleanup()
