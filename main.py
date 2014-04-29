@@ -221,10 +221,15 @@ class netgui(Gtk.Window):
             if len(AP) < 4:
                 continue
             essid = AP[4]
-            if essid is ('' or '\n'):
+            if essid == '':
                 essid = AP[0]
             power = str(((int(AP[2])*2)+200))+'%'
-            opts = AP[3].strip('[]').replace('][', ' and ').rstrip(' and ESS')
+            opts = AP[3].strip('[]').rstrip(' ESS').rstrip('[]')
+            opts = opts.replace('WPA-PSK-CCMP+TKIP',  'WPA(w/fallback)')
+            opts = opts.replace('WPA2-PSK-CCMP+TKIP', 'WPA2(w/fallback)')
+            opts = opts.replace('WPA-PSK-TKIP',       'WPA(weak!)')
+            opts = opts.replace('WPA2-PSK-CCMP',      'WPA2')
+            opts = opts.replace('][', ' & ')
             if current_bssid:
                 if current_bssid == AP[0]:
                     connected = 'Yes'
