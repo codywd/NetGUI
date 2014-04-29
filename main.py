@@ -160,16 +160,8 @@ class netgui(Gtk.Window):
         #     self.startScan(None)
         #     self.NoWifiMode = 0
 
-        # Start initial scan
-        pool = multiprocessing.Pool(processes=3)
-        m = multiprocessing.Manager()
-        self.scan_queue = m.Queue()
-        
-        p = multiprocessing.Process(target=wpa_cli_interface._really_scan, 
-            args=(self, self.scan_queue,) )
-        p.daemon = True
-        p.start()
         # self.startScan()
+        self.wpa_int, self.netgui_pipe = self.fork_wpa_interface()
         window.show_all()
 
     def NoWifiScan(self, e=None):
@@ -194,13 +186,34 @@ class netgui(Gtk.Window):
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
     def startScan(self,e=None):
-        wpa_cli_interface.scan(self, self.scan_queue)
+        self.netgui_pipe.send('Please Scan it.')
+        self.wait_for_APs(self.netgui_pipe)
+
+    def fork_wpa_interface(self):
+        # Start initial scan
+        netgui_pipe, wpa_pipe = multiprocessing.Pipe()
+        wpa_int = wpa_cli_interface(wpa_pipe)
+        p = multiprocessing.Process(target=wpa_int._really_scan, args=(wpa_pipe,))
+        p.daemon = True
+        p.start()
+        return wpa_int, netgui_pipe
+
+    def wait_for_APs(self, pipe):
+        do = pipe.recv()
+        if do == 'die':
+            print('do die')
+            return False
+        else:
+            self.refresh_APlist(do)
+        return True
+
 
     def refresh_APlist(self, data):
         '''get results of the scan... I think...'''
         self.APStore.clear()
+        APList = []
         current_bssid = self.network_status('bssid')
-        APList = data.split(r'\n')
+        seenAPs = data.split('\n')
         for row in seenAPs:
             APList.append(row.split('\t',4))
         for AP in APList:
@@ -462,24 +475,23 @@ class wpa_cli_interface:
     """This class handles the queuing, managment, and emit for scanning for 
     wifi networks.
     """
-    def __init__(self):
-        pass
+    def __init__(self, q):
+        self.q = q
 
-    def scan(self, q):
+    def scan(self, callback):
         '''make sure the interface we're about to scan on is ready before you 
         call me'''
-        q.put(1)
+        self.q.send(callback)
 
-        print('scan called')
-
-    def _really_scan(self, queue):
+    def _really_scan(self, pipe):
         '''use wpa_cli to scan for local Access points.'''
         while True:
-            if queue.get():
-                print(self.refresh_APlist)
+            callback = pipe.recv()
+            print('_really_scan' + callback)
+            if callback:
                 subprocess.call(["wpa_cli", "scan"])
                 scan = subprocess.check_output(["wpa_cli", "scan_results"])
-                self.emit(scan.decode('utf-8'), self.refresh_APlist)
+                self.emit(scan.decode('utf-8'), callback)
             else:
                 time.sleep(1)
 
@@ -487,7 +499,8 @@ class wpa_cli_interface:
         print('hold_data called')
 
     def emit(self, data, call):
-        call(data)
+        do = getattr(netgui, call, None)
+        self.q.send(data)
             
 
 def SSIDToProfileName(ssid):
@@ -573,7 +586,6 @@ def GetInterface(setit = None):
         with open(interface_file, 'r') as f:
             interface = f.read()
         return interface.strip()
-
 
 def cleanup():
     # Clean up time
