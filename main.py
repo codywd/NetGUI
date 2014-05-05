@@ -3,7 +3,6 @@
 # Import Standard Libraries
 import fcntl, os, re, sys, time
 import subprocess
-import sys
 import threading
 import multiprocessing
 # import webbrowser
@@ -147,23 +146,8 @@ class netgui(Gtk.Window):
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
-        Notify.init("NetGUI")
-            
-        self.interfaceName = GetInterface()
-        if self.interfaceName == "":
-            n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
-            n.show()
-            self.NoWifiScan(None)
-            self.NoWifiMode = 1
-            ScanButton.props.sensitive = False
-            print(str(self.NoWifiMode))
-        else:
-            self.startScan(None)
-            self.NoWifiMode = 0
-            print(str(self.NoWifiMode))
+        # Notify.init("NetGUI")
 
-        # Start initial scan
-        window.show_all()
         
         # self.interfaceName = GetInterface()
         # if self.interfaceName == "":
@@ -183,18 +167,16 @@ class netgui(Gtk.Window):
     def NoWifiScan(self, e=None):
         '''Disables wifi scanning for wired connections'''
         aps = {}
-        profiles = os.listdir("/etc/netctl/")
+        profiles = os.listdir(config_directiory)
         i = 0
         NoWifiMode = 1
         for profile in profiles:
-            if os.path.isfile("/etc/netctl/" + profile):
-                aps["row" + str(i)] = self.APStore.append([profile, "", "", ""])
-                self.APStore.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
-                self.APStore.set(aps["row" + str(i)], 2, "N/A.")
-                self.APStore.set(aps["row" + str(i)], 3, "N/A.")
-                i = i + 1
-            
+            if os.path.isfile(config_directiory + profile):
+                aps["row" + str(i)] = self.APStore.append([profile, 
+                    "N/A in No-Wifi mode.", "N/A", "N/A"])
+
     def onExit(self, widget=None, event=None, data=None):
+        '''kills main()'''
         if self.p == None:
             pass
         else:
@@ -203,42 +185,54 @@ class netgui(Gtk.Window):
         return True
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
-    def startScan(self, e):
-        self.p = multiprocessing.Process(target=self.onScan)
-        self.p.start()
-        self.p.join()
-        self.checkScan()
-        
-    def onScan(self, e=None):
-        print("Please wait! Now Scanning.")
-        wpacliFileHandler = open(wpacliFile, 'w')
-        InterfaceCtl.up(self, self.interfaceName)
-        subprocess.call(["wpa_cli", "scan"])
-        output=CheckOutput(self, "wpa_cli scan_results")
-        wpacliFileHandler.write(output)
-        wpacliFileHandler.close()
-        print("Done Scanning!")
-    
-    def checkScan(self):
+    def startScan(self,e=None):
+        self.netgui_pipe.send('Please Scan it.')
+        self.wait_for_APs(self.netgui_pipe)
+
+    def fork_wpa_interface(self):
+        # Start initial scan
+        netgui_pipe, wpa_pipe = multiprocessing.Pipe()
+        wpa_int = wpa_cli_interface(wpa_pipe)
+        p = multiprocessing.Process(target=wpa_int._really_scan, args=(wpa_pipe,))
+        p.daemon = True
+        p.start()
+        return wpa_int, netgui_pipe
+
+    def wait_for_APs(self, pipe):
+        do = pipe.recv()
+        if do == 'die':
+            print('do die')
+            return False
+        else:
+            self.refresh_APlist(do)
+        return True
+
+
+    def refresh_APlist(self, data):
+        '''get results of the scan... I think...'''
         self.APStore.clear()
-        
-        with open(wpacliFile, 'r') as tsv:
-            r = csv.reader(tsv, dialect='excel-tab')
-            next(r)
-            next(r)
-            aps = {}
-            i = 0
-            for row in r:                
-                network = row[4]            
-                if network == "":
-                    next(r)
-                aps["row" + str(i)] = self.APStore.append([network, "", "", ""])   
-                
-                quality = row[2]
-                if int(quality) <= -100:
-                    percent = "0%"
-                elif int(quality) >= -50:
-                    percent = "100%"
+        APList = []
+        current_bssid = self.network_status('bssid')
+        seenAPs = data.split('\n')
+        for row in seenAPs:
+            APList.append(row.split('\t',4))
+        for AP in APList:
+            # bssid / freq / power / opts / essid
+            if len(AP) < 4:
+                continue
+            essid = AP[4]
+            if essid == '':
+                essid = AP[0]
+            power = str(((int(AP[2])*2)+200))+'%'
+            opts = AP[3].strip('[]').rstrip(' ESS').rstrip('[]')
+            opts = opts.replace('WPA-PSK-CCMP+TKIP',  'WPA(w/fallback)')
+            opts = opts.replace('WPA2-PSK-CCMP+TKIP', 'WPA2(w/fallback)')
+            opts = opts.replace('WPA-PSK-TKIP',       'WPA(weak!)')
+            opts = opts.replace('WPA2-PSK-CCMP',      'WPA2')
+            opts = opts.replace('][', ' & ')
+            if current_bssid:
+                if current_bssid == AP[0]:
+                    connected = 'Yes'
                 else:
                     connected = 'No'
             else:
@@ -276,7 +270,7 @@ class netgui(Gtk.Window):
                 key = get_network_pw(self, "Please enter network password", "Network Password Required.")
                 CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                 try:
-                    InterfaceCtl.down(self, netinterface)
+                    network_interface.down(self, netinterface)
                     NetCTL.stopall(self)
                     NetCTL.start(self, profile)
                     n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
@@ -304,8 +298,8 @@ class netgui(Gtk.Window):
                 n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                 n.show()
                 Notify.uninit()   
-            
-    
+        self.refresh_APlist()
+
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter != None:
@@ -324,52 +318,50 @@ class netgui(Gtk.Window):
         profile = SSIDToProfileName(networkSSID)
         interfaceName = GetInterface()
         NetCTL.stop(self, profile)
-        InterfaceCtl.down(self, interfaceName)
+        network_interface.down(self, interfaceName)
         self.startScan(None)
         n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + networkSSID, "dialog-information")
         n.show()        
-        
+
     def prefClicked(self, menuItem):
         # Setting up the cancel function here fixes a wierd bug where, if outside of the prefClicked function
         # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
         # and not destroy it, is it causes another bug where the dialog becomes a small little
         # titlebar box. I don't know how to fix either besides this.
         def OnLoad(self):
-            f = open("/usr/lib/netgui/interface.cfg", 'r')
+            f = open(interface_file, 'r')
             interfaceEntry.set_text(str(f.read()))
             f.close()
-            
+
         def profBrowseClicked(self):
             dialog = Gtk.FileChooserDialog("Please Choose Your Profile", self,
                                            Gtk.FileChooserAction.OPEN,
                                            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                                             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-            
+
             response = dialog.run()
             if response == Gtk.ResponseType.OK:
                 defaultProfName.set_text(dialog.get_filename())
             elif response == Gtk.ResponseType.CANCEL:
                 pass
-            
+
             dialog.destroy()
-            
+
         def cancelClicked(self):
-            print("Cancel Clicked.")
+            # print("Cancel Clicked.")
             preferencesDialog.hide()
 
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
         # and because it makes the program flow more, IMHO
         def saveClicked(self):
-            f = open("/usr/lib/netgui/interface.cfg", 'r+')
-            curInt = f.read()
-            f.close()
-            newInt = interfaceEntry.get_text()
-            if newInt != curInt:
-                for line in fileinput.input("/usr/lib/netgui/interface.cfg", inplace=True):
-                    print(newInt)
+            with open(interface_file, 'r+') as f:
+                interface = f.read()
+                new_interface = interfaceEntry.get_text()
+                if new_interface is not interface:
+                    GetInterface(new_interface)
             preferencesDialog.hide()
-            
-        def CloseClicked(self):
+
+        def CloseClicked(self, gtkevent):
             preferencesDialog.hide()
 
         # Get the things we need from UI.glade
@@ -379,7 +371,7 @@ class netgui(Gtk.Window):
         interfaceEntry = self.builder.get_object("wiInterface")
         defaultProfBrowse = self.builder.get_object("fileChooser")
         defaultProfName = self.builder.get_object("defaultProfilePath")
-        
+
         # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
@@ -398,7 +390,9 @@ class netgui(Gtk.Window):
     def reportIssue(self, menuItem):
         # Why would I need a local way of reporting issues when I can use github? Exactly.
         # And since no more dependencies are caused by this, I have no problems with it.
-        webbrowser.open("https://github.com/codywd/NetGUI/issues")
+        pass
+        # webbrowser.open("https://github.com/codywd/NetGUI/issues")
+        # disabled, don't open a webbrowser as root, WTF?
 
     def aboutClicked(self, menuItem):
         # Getting the about dialog from UI.glade
@@ -431,20 +425,88 @@ class NetCTL(object):
         print("netctl:: restart" + network)
         subprocess.call(["netctl", "restart", profile])
 
-class InterfaceCtl(object):
-    # Control the network interface, a.k.a wlan0 or eth0
-    # etc...
+class network_interface:
+    '''Control the network interface, a.k.a wlan0 or eth0 etc...'''
+    def __init__(self, interface=None):
+        if interface:
+            self.interface = interface
+            self.state = self.status()
+        else:
+            self.state = None
+            self.interface = None
 
-    def __init__(self):
-        super(InterfaceCtl, self).__init__()
-
-    def down(self, interface):
-        print("interface:: down: " + interface)
+    def down(self, interface=None):
+        '''put interface down'''
+        if not interface:
+            interface = self.interface
         subprocess.call(["ip", "link", "set", "down", "dev", interface])
 
-    def up(self, interface):
-        print("interface:: up: " + interface)
+    def up(self, interface=None):
+        '''bring interface up'''
+        if not interface:
+            interface = self.interface
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
+
+    def status(self, interface=None, guess=None):
+        '''get the current status of interface'''
+        if not interface:
+            interface = self.interface
+
+        ip_link = subprocess.check_output(["ip", "link", "show", interface])
+        ip_link = ip_link.decode("utf-8")
+        if 'state UP' in ip_link:
+            state = True
+        elif 'state DOWN' in ip_link:
+            state = False
+        else:
+            state = 'unknown'
+        if guess is not None:
+            if self.interface is not None:
+                self.state = state
+            return state
+        else:
+            if guess == state:
+                return True
+            else:
+                return False
+        try:
+            pass
+        except:
+            raise 'Unhandled event in network_interface.status'
+            print('unknown network status')
+            sys.exit(9)
+
+class wpa_cli_interface:
+    """This class handles the queuing, managment, and emit for scanning for 
+    wifi networks.
+    """
+    def __init__(self, q):
+        self.q = q
+
+    def scan(self, callback):
+        '''make sure the interface we're about to scan on is ready before you 
+        call me'''
+        self.q.send(callback)
+
+    def _really_scan(self, pipe):
+        '''use wpa_cli to scan for local Access points.'''
+        while True:
+            callback = pipe.recv()
+            print('_really_scan' + callback)
+            if callback:
+                subprocess.call(["wpa_cli", "scan"])
+                scan = subprocess.check_output(["wpa_cli", "scan_results"])
+                self.emit(scan.decode('utf-8'), callback)
+            else:
+                time.sleep(1)
+
+    def hold_data(self, data, call):
+        print('hold_data called')
+
+    def emit(self, data, call):
+        do = getattr(netgui, call, None)
+        self.q.send(data)
+            
 
 def SSIDToProfileName(ssid):
     return profile_prefix + ssid
@@ -458,8 +520,8 @@ def CreateConfig(ssid, interface, security, key, ip='dhcp'):
         security = 'wep'
     else:
         security = 'none'
-    f = open(conf_dir + filename, 'w')
-    f.write("Description='This profile was generated by netgui for " + str(ssid)+".'\n" +
+    f = open(config_directiory + filename, 'w')
+    f.write("status_directiory='This profile was generated by netgui for " + str(ssid)+".'\n" +
             "Interface=" + str(interface) + "\n" +
             "Connection=wireless\n" +
             "Security=" + str(security) + "\n" +
@@ -471,14 +533,6 @@ def CreateConfig(ssid, interface, security, key, ip='dhcp'):
     f.write("\nIP=dhcp\n")
     f.close()
     print("Alright, I have finished making the profile!")
-
-def IsConnected():
-    # If we are connected to a network, it lists it. Otherwise, it returns nothing (or an empty byte).
-    check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
-    if check == b'':
-        return False
-    else:
-        return True
 
 def CheckOutput(self, command):
     # Run a command, return what it's output was, and convert it from bytes to unicode
@@ -514,58 +568,50 @@ def get_network_pw(parent, message, title=''):
     else:
         return None
 
-def CheckGrep(self, grepCmd):
-    # Run a grep command, decode it from bytes to unicode, strip it of spaces,
-    # and return it's output.
-    p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
-    output = ((p.communicate()[0]).decode("utf-8")).strip()
-    return output
-
-def GetInterface():
-    if os.path.isfile(intFile) != True:
-        
+def GetInterface(setit = None):
+    if setit is not None:
+        with open(interface_file, 'w') as f:
+            f.write(setit)
+            f.flush()
+        return setit
+    elif os.path.isfile(interface_file) is not True:
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if "wlp" or "wlan" in device:
-                interfaceName = device
-            else:
-                pass
-        if interfaceName == "":
-            intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
-            interfaceName = intNameCheck[166:172]     
-        if interfaceName == "":
-            interfaceName = get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
-        f = open(intFile, 'w')
-        f.write(interfaceName)
-        f.close()
-        return str(interfaceName).strip()
+            if device.startswith('wl'):
+                interface = device
+        if not interface:
+            interface = get_network_pw(self, "We could not automatically "+\
+                "detect your wireless interface. Please type it here. Leave "+\
+                "blank for NoWifiMode.", "Network Interface Required.")
+        with open(interface_file, 'w') as f:
+            f.write(interface)
+            f.flush()
+        return interface.strip()
     else:
-        f = open(intFile, 'r')
-        interfaceName = f.readline()
-        f.close()   
-        return str(interfaceName).strip()
-
+        with open(interface_file, 'r') as f:
+            interface = f.read()
+        return interface.strip()
 
 def cleanup():
     # Clean up time
     try:
-        os.unlink(iwlistFile)
-        os.unlink(iwconfigFile)
+        os.unlink(iwlist_file)
+        os.unlink(iwconfig_file)
     except:
         pass
-    # To avoid race condition, we should unlink pidFile before unlock
-    os.unlink(pidFile)
+    # To avoid race condition, we should unlink pid_file before unlock
+    os.unlink(pid_file)
     fcntl.lockf(fp, fcntl.LOCK_UN)
     fp.close()
 
+def main():
+    global gui
+    Gdk.threads_init()
+    Gdk.threads_enter()
+    gui = netgui()
+    Gdk.threads_leave()
+    Gtk.main()
+
 if __name__ == "__main__":
-    try:
-        Gdk.threads_init()
-        Gdk.threads_enter()
-        netgui()
-        Gdk.threads_leave()
-        Gtk.main()
-    except Exception as e:
-        print(e)
-    finally:
-        cleanup()
+    main()
+    cleanup()
