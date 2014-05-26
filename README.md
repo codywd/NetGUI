@@ -16,3 +16,11 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 2. python-gobject
 4. netctl
 5. notify-osd
+
+## General todo list / wish list
+
+- [ ] add tray icon
+- [ ] mv all actual work out of the gui
+- [ ] interface with auto roaming
+- [ ] mild network diagnostics
+- [ ] build python module for netctl for outside apps
