@@ -1,109 +1,95 @@
 #! /usr/bin/python3
 
 # Import Standard Libraries
-import fcntl, os, re, sys, time
-import subprocess
-import threading
+import csv
+import fcntl
+import fileinput
 import multiprocessing
-# import webbrowser
+import os
+import re
+import subprocess
+import sys
+import threading
+import time
+import webbrowser
 
 # Import Third Party Libraries
 from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
-# Setting base app information, such as version, and configuration
-# directories/files.
+# Setting base app information, such as version, and configuration directories/files.
+progVer = "0.65"
+conf_dir = "/etc/netctl/"
+statusDir = "/var/lib/netgui/"
+progLoc = "/usr/share/netgui/"
+intFile = statusDir + "interface.cfg"
+license_dir = '/usr/share/licenses/netgui/'
+iwconfigFile = statusDir + "iwlist.log"
+wpacliFile = statusDir + "wpa_cli.log"
+iwlistFile = statusDir + "iwlist.log"
+pidFile = statusDir + "program.pid"
+imgLoc = "/usr/share/netgui/imgs"
+prefFile = statusDir + "preferences.cfg"
+pidNumber = os.getpid()
 
-if os.path.dirname(os.path.realpath(__file__)) is not '/usr/share/netgui':
-    # We'll store logs here instead
-    status_directiory = os.path.dirname(os.path.realpath(__file__))
-    config_directiory = os.getcwd()
-else:
-    status_directiory = '/usr/share/netgui'
-    config_directiory = "/etc/netctl"
-    if not os.path.exists(status_directiory):
-        if not subprocess.call("mkdir -p " + status_directiory, shell=True):
-            print("couldn't get a working directory")
-            sys.exit(2)
-
-
-program_version   = "0.65"
-program_location  = os.path.dirname(os.path.realpath(__file__))
-profile_prefix    = "/netgui_"
-preferences_file  = status_directiory + "/preferences.cfg"
-interface_file    = status_directiory + "/interface.cfg"
-iwconfig_file     = status_directiory + "/iwlist.log"
-iwlist_file       = status_directiory + "/iwlist.log"
-wpa_cli_file      = status_directiory + "/wpa_cli.log"
-pid_file          = status_directiory + "/netgui.pid"
-imgs_directiory   = "/usr/share/netgui/imgs"
-license_directory = '/usr/share/licenses/netgui'
-pid_number        = os.getpid()
-
-# Allows for command line arguments. Currently only a "Help" argument,
-# but more to come.
+# Allows for command line arguments. Currently only a "Help" argument, but more to come.
 # TODO import ext libary to handel this for us
 for arg in sys.argv:
     if arg == '--help' or arg == '-h':
-        print("netgui The NetCTL GUI!\nNot very helpful we know, comming soon?")
+        print("netgui; The NetCTL GUI! \nWe need root :)")
         sys.exit(0)
     if arg == '--version' or arg == '-v':
-        print("Your netgui version is " + program_version + ".")
+        print("Your netgui version is " + progVer + ".")
         sys.exit(0)
 
-
+if os.path.exists(statusDir):
+    pass
+else:
+    subprocess.call("mkdir " + statusDir, shell=True)
 
 # Let's make sure we're root, while at it.
 euid = os.geteuid()
 if euid != 0:
-    print("netgui requries root to run.\nPlease sudo or su -c and try again.")
+    print("netgui NEEDS to be run as root, since many commands we use requires it.\nPlease sudo or su -c and try again.")
     sys.exit(77)
 
 # Let's also not allow any more than one instance of netgui.
-# Note that the builtin open will truncate the file even if it's already locked.
-# We must use os.open to avoid the behavior and truncate it later.
-fp = os.fdopen(os.open(pid_file, os.O_CREAT | os.O_WRONLY), 'w')
+fp = open(pidFile, 'w')
 try:
-    fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    fcntl.lockf(fp, fcntl.LOCK_EX|fcntl.LOCK_NB)
 except IOError:
-    print("We only allow one instance of netgui to be running at a time for " +
-        "''precautionary'' reasons.")
+    print("We only allow one instance of netgui to be running at a time for precautionary reasons.")
     sys.exit(1)
 
-fp.truncate()
-fp.write(str(pid_number)+"\n")
+fp.write(str(pidNumber)+"\n")
 fp.flush()
 
 # The main class of netgui. Nifty name, eh?
 class netgui(Gtk.Window):
-    # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong,
-    # but it works.
+    # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong, but it works.
     def __init__(self):
         self.InitUI()
 
-    # Since I LOVE everything to be organized, I use a separate InitUI function
-    # so it's clean.
+    # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
     def InitUI(self):
-
-        # Create a "Builder", which basically allows me to import the Glade file
-        # for a complete interface.
+        IsConnected()
+        # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(program_location + "/UI.glade")
+        self.builder.add_from_file(progLoc + "UI.glade")
 
         # Init Vars
         self.scanning = False
         self.APindex = 0
         self.p = None
 
-        # Grab the "window1" attribute from UI.glade, and set it to show
-        # everything.
+        # Grab the "window1" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
-        window.connect("delete-event", self.onExit)
+        window.connect("delete-event", Gtk.main_quit)
 
         # Get the OnScan button in case we are going to run in NoWifiMode
         ScanButton = self.builder.get_object("scanAPsTool")
-
+        
         # Setup the main area of netgui: The network list.
         self.APList = self.builder.get_object("treeview1")
         self.APStore = Gtk.ListStore(str, str, str, str)
@@ -111,15 +97,23 @@ class netgui(Gtk.Window):
 
         # Set Up Columns
         # renderer1 = The Cell renderer. Basically allows for text to show.
-        # column1 = The actual setup of the column.
-        # Arguments = title, CellRenderer, textIndex)
+        # column1 = The actual setup of the column. Arguments = title, CellRenderer, textIndex)
         # Actually append the column to the treeview.
-        network_columns = ["ESSID","Strength","Encryption","Status"]
-        for i in range(len(network_columns)):
-            CellRenderer = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn(network_columns[i], CellRenderer, text=i)
-            column.set_resizable(True)
-            self.APList.append_column(column)
+        SSIDCellRenderer = Gtk.CellRendererText()
+        SSIDColumn = Gtk.TreeViewColumn("SSID", SSIDCellRenderer, text=0)
+        self.APList.append_column(SSIDColumn)
+
+        connectQualityCellRenderer = Gtk.CellRendererText()
+        connectQualityColumn = Gtk.TreeViewColumn("Connection Quality", connectQualityCellRenderer, text=1)
+        self.APList.append_column(connectQualityColumn)
+
+        securityTypeCellRenderer = Gtk.CellRendererText()
+        securityTypeColumn = Gtk.TreeViewColumn("Security Type", securityTypeCellRenderer, text=2)
+        self.APList.append_column(securityTypeColumn)
+
+        connectedCellRenderer = Gtk.CellRendererText()
+        connectedColumn = Gtk.TreeViewColumn("Connected?", connectedCellRenderer, text=3)
+        self.APList.append_column(connectedColumn)
 
         # Set TreeView as Reorderable
         self.APList.set_reorderable(True)
@@ -128,194 +122,182 @@ class netgui(Gtk.Window):
 
         # Set all the handlers I defined in glade to local functions.
         handlers = {
-            "onExit": self.onExit,
-            "onAboutClicked": self.aboutClicked,
-            "onScan": self.startScan,
-            "onConnect": self.connectClicked,
-            "onDConnect": self.dConnectClicked,
-            "onPrefClicked": self.prefClicked,
-            "onHelpClicked": self.helpClicked,
-            "onIssueReport": self.reportIssue
+        "onExit": self.onExit,
+        "onAboutClicked": self.aboutClicked,
+        "onScan": self.startScan,
+        "onConnect": self.connectClicked,
+        "onDConnect": self.dConnectClicked,
+        "onPrefClicked": self.prefClicked,
+        "onHelpClicked": self.helpClicked,
+        "onIssueReport": self.reportIssue
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
-
+        
         # Populate profiles menu
-        menu = self.builder.get_object("menubar1")
         profileMenu = self.builder.get_object("profilesMenu")
-        profileMenu.set_submenu(Gtk.Menu())
-        profiles = os.listdir(config_directiory)
+        profiles = os.listdir("/etc/netctl/")
         # Iterate through profiles directory, and add to "Profiles" Menu #
-        for i in profiles:
-            if os.path.isfile(config_directiory + i):
-                profile = profileMenu.get_submenu().append(Gtk.MenuItem(label=i))
-        # This should automatically detect their wireless device name. I'm not
-        # 100% sure if it works on every computer, but we can only know from
-        # multiple tests. If it doesn't work, I will re-implement the old way.
-        # Notify.init("NetGUI")
+        #for i in profiles:
+        #    if os.path.isfile("/etc/netctl/" + i):
+        #        profile = profileMenu.set_submenu(i)   
+        # This should automatically detect their wireless device name. I'm not 100% sure
+        # if it works on every computer, but we can only know from multiple tests. If
+        # it doesn't work, I will re-implement the old way.
+        Notify.init("NetGUI")
+            
+        self.interfaceName = GetInterface()
+        if self.interfaceName == "":
+            n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
+            n.show()
+            self.NoWifiScan(None)
+            self.NoWifiMode = 1
+            ScanButton.props.sensitive = False
+            print(str(self.NoWifiMode))
+        else:
+            self.startScan(None)
+            self.NoWifiMode = 0
+            print(str(self.NoWifiMode))
 
-
-        # self.interfaceName = GetInterface()
-        # if self.interfaceName == "":
-        #     # n = Notify.Notification.new("Could not detect interface!",
-            # "No interface was detected. Now running in No-Wifi Mode. Scan
-            # Button is disabled.", "dialog-information")
-        #     # n.show()
-        #     self.NoWifiScan(None)
-        #     self.NoWifiMode = 1
-        #     ScanButton.props.sensitive = False
-        # else:
-        #     self.startScan(None)
-        #     self.NoWifiMode = 0
-
-        # self.startScan()
-        self.wpa_int, self.netgui_pipe = self.fork_wpa_interface()
+        # Start initial scan
         window.show_all()
-
-    def NoWifiScan(self, e=None):
-        '''Disables wifi scanning for wired connections'''
+        
+        
+    def NoWifiScan(self, e):
         aps = {}
-        profiles = os.listdir(config_directiory)
+        profiles = os.listdir("/etc/netctl/")
         i = 0
         NoWifiMode = 1
         for profile in profiles:
-            if os.path.isfile(config_directiory + profile):
-                aps["row" + str(i)] = self.APStore.append([profile,
-                    "N/A in No-Wifi mode.", "N/A", "N/A"])
-
-    def onExit(self, widget=None, event=None, data=None):
-        '''kills main()'''
+            if os.path.isfile("/etc/netctl/" + profile):
+                aps["row" + str(i)] = self.APStore.append([profile, "", "", ""])
+                self.APStore.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
+                self.APStore.set(aps["row" + str(i)], 2, "N/A.")
+                self.APStore.set(aps["row" + str(i)], 3, "N/A.")
+                i = i + 1
+            
+    def onExit(self, e):
         if self.p == None:
             pass
         else:
             self.p.terminate()
+        sys.exit()
         Gtk.main_quit()
-        return True
 
-    # This class is only here to actually start running all the code in "onScan"
-    # in a separate process.
-    def startScan(self,e=None):
-        self.netgui_pipe.send('Please Scan it.')
-        self.wait_for_APs(self.netgui_pipe)
-
-    def fork_wpa_interface(self):
-        # Start initial scan
-        netgui_pipe, wpa_pipe = multiprocessing.Pipe()
-        wpa_int = wpa_cli_interface(wpa_pipe)
-        p = multiprocessing.Process(target=wpa_int._really_scan,
-                                    args=(wpa_pipe,))
-        p.daemon = True
-        p.start()
-        return wpa_int, netgui_pipe
-
-    def wait_for_APs(self, pipe):
-        do = pipe.recv()
-        if do == 'die':
-            print('do die')
-            return False
-        else:
-            self.refresh_APlist(do)
-        return True
-
-
-    def refresh_APlist(self, data):
-        '''get results of the scan... I think...'''
+    # This class is only here to actually start running all the code in "onScan" in a separate process.
+    def startScan(self, e):
+        self.p = multiprocessing.Process(target=self.onScan)
+        self.p.start()
+        self.p.join()
+        self.checkScan()
+        
+    def onScan(self, e=None):
+        print("Please wait! Now Scanning.")
+        wpacliFileHandler = open(wpacliFile, 'w')
+        InterfaceCtl.up(self, self.interfaceName)
+        subprocess.call(["wpa_cli", "scan"])
+        output=CheckOutput(self, "wpa_cli scan_results")
+        wpacliFileHandler.write(output)
+        wpacliFileHandler.close()
+        print("Done Scanning!")
+    
+    def checkScan(self):
         self.APStore.clear()
-        APList = []
-        current_bssid = self.network_status('bssid')
-        seenAPs = data.split('\n')
-        for row in seenAPs:
-            APList.append(row.split('\t',4))
-        for AP in APList:
-            # bssid / freq / power / opts / essid
-            if len(AP) < 4:
-                continue
-            essid = AP[4]
-            if essid == '':
-                essid = AP[0]
-            power = str(((int(AP[2])*2)+200))+'%'
-            opts = AP[3].strip('[]').rstrip(' ESS').rstrip('[]')
-            opts = opts.replace('WPA-PSK-CCMP+TKIP',  'WPA(w/fallback)')
-            opts = opts.replace('WPA2-PSK-CCMP+TKIP', 'WPA2(w/fallback)')
-            opts = opts.replace('WPA-PSK-TKIP',       'WPA(weak!)')
-            opts = opts.replace('WPA2-PSK-CCMP',      'WPA2')
-            opts = opts.replace('][', ' & ')
-            if current_bssid:
-                if current_bssid == AP[0]:
-                    connected = 'Yes'
+        
+        with open(wpacliFile, 'r') as tsv:
+            r = csv.reader(tsv, dialect='excel-tab')
+            next(r)
+            next(r)
+            aps = {}
+            i = 0
+            for row in r:                
+                network = row[4]            
+                if network == "":
+                    next(r)
+                aps["row" + str(i)] = self.APStore.append([network, "", "", ""])   
+                
+                quality = row[2]
+                if int(quality) <= -100:
+                    percent = "0%"
+                elif int(quality) >= -50:
+                    percent = "100%"
                 else:
-                    connected = 'No'
-            else:
-                connected = "unknown"
-            self.APStore.append([essid, power, opts, connected])
-        return True
-
-    def network_status(self, req=None):
-        status = subprocess.check_output(['wpa_cli', 'status']).decode("utf-8")
-        if req is None:
-            return status
-        else:
-            result = status.split('\n')
-            for line in result:
-                line = line.split('=',1)
-                if line[0] == req:
-                    return line[1]
-        return False
+                    fquality = (2 * (int(quality) + 100))
+                    percent = str(fquality) + "%"
+                self.APStore.set(aps["row" + str(i)], 1, percent)
+                
+                security = row[3]
+                if "WPA" and "PSK" and not "TKIP" in security:
+                    encryption = "WPA2-PSK"
+                elif "WPA" and "TKIP" in security:
+                    encryption = "WPA2-TKIP"
+                elif "OPENSSID" in security:
+                    encryption = "Open"
+                elif "WEP" in security:
+                    encryption = "WEP"
+                else:
+                    encryption = "Unknown"
+                self.APStore.set(aps["row" + str(i)], 2, encryption)
+                
+                
+                if IsConnected() == False:
+                    self.APStore.set(aps["row" + str(i)], 3, "No")
+                else:
+                    connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
+                    if network in connectedNetwork:
+                        self.APStore.set(aps["row" + str(i)], 3, "Yes")
+                    else:
+                        self.APStore.set(aps["row" + str(i)], 3, "No")              
+                i=i+1
 
     def connectClicked(self, menuItem):
-        '''process a connection request from the user'''
+        print(str(self.NoWifiMode))
         if self.NoWifiMode == 0:
             select = self.APList.get_selection()
             networkSSID = self.getSSID(select)
-            profile = SSIDToProfileName(networkSSID)
+            profile = "netgui_" + networkSSID
             netinterface = GetInterface()
-            if os.path.isfile(config_directiory + profile):
-                network_interface.down(status_directiory, netinterface)
+            if os.path.isfile(conf_dir + profile):
+                InterfaceCtl.down(self, netinterface)
                 NetCTL.stopall(self)
                 NetCTL.start(self, profile)
-                n = Notify.Notification.new("Connected to new network!",
-                    "You are now connected to " + networkSSID,
-                    "dialog-information")
+                n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
                 n.show()
             else:
                 networkSecurity = self.getSecurity(select)
-                key = get_network_pw(self, "Please enter network password",
-                    "Network Password Required.")
-                CreateConfig(networkSSID, self.interfaceName,
-                    networkSecurity, key)
+                key = get_network_pw(self, "Please enter network password", "Network Password Required.")
+                CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                 try:
-                    network_interface.down(self, netinterface)
+                    InterfaceCtl.down(self, netinterface)
                     NetCTL.stopall(self)
                     NetCTL.start(self, profile)
-                    n = Notify.Notification.new("Connected to new network!",
-                        "You are now connected to " + networkSSID,
-                        "dialog-information")
+                    n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
                     n.show()
+                    #wx.MessageBox("You are now connected to " +
+                    #             str(nameofProfile).strip() + ".", "Connected.")
                 except:
-                    n = Notify.Notification.new("Error!", "There was an error."+
-                        " Please report an issue at the github page if it " +
-                        "persists.", "dialog-information")
+                    #wx.MessageBox("There has been an error, please try again. If"
+                    #              " it persists, please contact Cody Dostal at "
+                    #              "dostalcody@gmail.com.", "Error!")        
+                    n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                     n.show()
-                    Notify.uninit()
+                    Notify.uninit()        
         elif self.NoWifiMode == 1:
             select = self.APList.get_selection()
             NWMprofile = self.getSSID(select)
             netinterface = GetInterface()
             try:
-                network_interface.down(self, netinterface)
+                InterfaceCtl.down(self, netinterface)
                 NetCTL.stopall(self)
                 NetCTL.start(self, NWMprofile)
-                n = Notify.Notification.new("Connected to new profile!",
-                    "You're now connected to "+NWMprofile, "dialog-information")
+                n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + NWMprofile, "dialog-information")
                 n.show()
-            except:
-                n = Notify.Notification.new("Error!", "There was an error. "+
-                    "Please report an issue at the github page if it persists.",
-                    "dialog-information")
+            except:    
+                n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                 n.show()
-                Notify.uninit()
-        self.refresh_APlist()
-
+                Notify.uninit()   
+            
+    
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter != None:
@@ -331,74 +313,50 @@ class netgui(Gtk.Window):
     def dConnectClicked(self, menuItem):
         select = self.APList.get_selection()
         networkSSID = self.getSSID(select)
-        profile = SSIDToProfileName(networkSSID)
+        profile = "netgui_" + networkSSID
         interfaceName = GetInterface()
         NetCTL.stop(self, profile)
-        network_interface.down(self, interfaceName)
+        InterfaceCtl.down(self, interfaceName)
         self.startScan(None)
-        n = Notify.Notification.new("Disconnected from network!",
-            "You're now disconnected from " + networkSSID, "dialog-information")
-        n.show()
-
+        n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + networkSSID, "dialog-information")
+        n.show()        
+        
     def prefClicked(self, menuItem):
-        # Setting up the cancel function here fixes a wierd bug where, if
-        # outside of the prefClicked function it causes an extra button click
-        # for each time the dialog is hidden. The reason we hide the dialog and
-        # not destroy it, is it causes another bug where the dialog becomes a
-        # small little titlebar box. I don't know how to fix either besides
-        # this. TODO
+        # Setting up the cancel function here fixes a wierd bug where, if outside of the prefClicked function
+        # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
+        # and not destroy it, is it causes another bug where the dialog becomes a small little
+        # titlebar box. I don't know how to fix either besides this.
         def OnLoad(self):
-            f = open(interface_file, 'r')
+            f = open("/usr/lib/netgui/interface.cfg", 'r')
             interfaceEntry.set_text(str(f.read()))
             f.close()
-
-        def profBrowseClicked(self):
-            dialog = Gtk.FileChooserDialog("Please Choose Your Profile", self,
-                                   Gtk.FileChooserAction.OPEN,
-                                   (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                                    Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-
-            response = dialog.run()
-            if response == Gtk.ResponseType.OK:
-                defaultProfName.set_text(dialog.get_filename())
-            elif response == Gtk.ResponseType.CANCEL:
-                pass
-
-            dialog.destroy()
-
+            
         def cancelClicked(self):
-            # print("Cancel Clicked.")
+            print("Cancel Clicked.")
             preferencesDialog.hide()
 
-        # Setting up the saveClicked function within the prefClicked function
-        # just because it looks cleaner and because it makes the program flow
-        # more, IMHO
+        # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
+        # and because it makes the program flow more, IMHO
         def saveClicked(self):
-            with open(interface_file, 'r+') as f:
-                interface = f.read()
-                new_interface = interfaceEntry.get_text()
-                if new_interface is not interface:
-                    GetInterface(new_interface)
+            f = open("/usr/lib/netgui/interface.cfg", 'r+')
+            curInt = f.read()
+            f.close()
+            newInt = interfaceEntry.get_text()
+            if newInt != curInt:
+                for line in fileinput.input("/usr/lib/netgui/interface.cfg", inplace=True):
+                    print(newInt)
             preferencesDialog.hide()
 
-        def CloseClicked(self, gtkevent):
-            preferencesDialog.hide()
-
-        # Get the things we need from UI.glade
+        # Get the three things we need from UI.glade
         preferencesDialog = self.builder.get_object("prefDialog")
         saveButton = self.builder.get_object("saveButton")
         cancelButton = self.builder.get_object("cancelButton")
         interfaceEntry = self.builder.get_object("wiInterface")
-        defaultProfBrowse = self.builder.get_object("fileChooser")
-        defaultProfName = self.builder.get_object("defaultProfilePath")
 
-        # Connecting the "clicked" signals of each button to the relevant
-        # function.
+        # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
-        defaultProfBrowse.connect("clicked", profBrowseClicked)
         preferencesDialog.connect("show", OnLoad)
-        preferencesDialog.connect("delete-event", CloseClicked)
 
         # Opening the Preferences Dialog.
         preferencesDialog.run()
@@ -409,20 +367,16 @@ class netgui(Gtk.Window):
         subprocess.Popen("yelp")
 
     def reportIssue(self, menuItem):
-        # Why would I need a local way of reporting issues when I can use
-        # github? Exactly. And since no more dependencies are caused by this,
-        # I have no problems with it.
-        pass
-        # webbrowser.open("https://github.com/codywd/NetGUI/issues")
-        # disabled, don't open a webbrowser as root, WTF?
+        # Why would I need a local way of reporting issues when I can use github? Exactly.
+        # And since no more dependencies are caused by this, I have no problems with it.
+        webbrowser.open("https://github.com/codywd/NetGUI/issues")
 
     def aboutClicked(self, menuItem):
         # Getting the about dialog from UI.glade
         aboutDialog = self.builder.get_object("aboutDialog")
         # Opening the about dialog.
         aboutDialog.run()
-        # Hiding the about dialog. Read in "prefDialog" for why we hide, not
-        # destroy.
+        # Hiding the about dialog. Read in "prefDialog" for why we hide, not destroy.
         aboutDialog.hide()
 
 class NetCTL(object):
@@ -448,108 +402,30 @@ class NetCTL(object):
         print("netctl:: restart" + network)
         subprocess.call(["netctl", "restart", profile])
 
-class network_interface:
-    '''Control the network interface, a.k.a wlan0 or eth0 etc...'''
-    def __init__(self, interface=None):
-        if interface:
-            self.interface = interface
-            self.state = self.status()
-        else:
-            self.state = None
-            self.interface = None
+class InterfaceCtl(object):
+    # Control the network interface, a.k.a wlan0 or eth0
+    # etc...
 
-    def down(self, interface=None):
-        '''put interface down'''
-        if not interface:
-            interface = self.interface
+    def __init__(self):
+        super(InterfaceCtl, self).__init__()
+
+    def down(self, interface):
+        print("interface:: down: " + interface)
         subprocess.call(["ip", "link", "set", "down", "dev", interface])
 
-    def up(self, interface=None):
-        '''bring interface up'''
-        if not interface:
-            interface = self.interface
+    def up(self, interface):
+        print("interface:: up: " + interface)
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
 
-    def status(self, interface=None, guess=None):
-        '''get the current status of interface'''
-        if not interface:
-            interface = self.interface
-
-        ip_link = subprocess.check_output(["ip", "link", "show", interface])
-        ip_link = ip_link.decode("utf-8")
-        if 'state UP' in ip_link:
-            state = True
-        elif 'state DOWN' in ip_link:
-            state = False
-        else:
-            state = 'unknown'
-        if guess is not None:
-            if self.interface is not None:
-                self.state = state
-            return state
-        else:
-            if guess == state:
-                return True
-            else:
-                return False
-        try:
-            pass
-        except:
-            raise 'Unhandled event in network_interface.status'
-            print('unknown network status')
-            sys.exit(9)
-
-class wpa_cli_interface:
-    """This class handles the queuing, managment, and emit for scanning for
-    wifi networks.
-    """
-    def __init__(self, q):
-        self.q = q
-
-    def scan(self, callback):
-        '''make sure the interface we're about to scan on is ready before you
-        call me'''
-        self.q.send(callback)
-
-    def _really_scan(self, pipe):
-        '''use wpa_cli to scan for local Access points.'''
-        while True:
-            callback = pipe.recv()
-            print('_really_scan' + callback)
-            if callback:
-                subprocess.call(["wpa_cli", "scan"])
-                scan = subprocess.check_output(["wpa_cli", "scan_results"])
-                self.emit(scan.decode('utf-8'), callback)
-            else:
-                time.sleep(1)
-
-    def hold_data(self, data, call):
-        print('hold_data called')
-
-    def emit(self, data, call):
-        do = getattr(netgui, call, None)
-        self.q.send(data)
-
-
-def SSIDToProfileName(ssid):
-    return profile_prefix + ssid
-
-def CreateConfig(ssid, interface, security, key, ip='dhcp'):
+def CreateConfig(name, interface, security, key, ip='dhcp'):
     print("Creating Profile! Don't interrupt!\n")
-    filename = SSIDToProfileName(ssid)
-    if 'wpa' in security:
-        security = 'wpa'
-    elif 'wep' in security:
-        security = 'wep'
-    else:
-        security = 'none'
-    f = open(config_directiory + filename, 'w')
-    f.write("status_directiory='This profile was generated by netgui for " +
-            str(ssid)+".'\n" +
+    filename = "netgui_" + name
+    f = open(conf_dir + filename, 'w')
+    f.write("Description='This profile was generated by netgui for " + str(name)+".'\n" +
             "Interface=" + str(interface) + "\n" +
             "Connection=wireless\n" +
             "Security=" + str(security) + "\n" +
-            "ESSID='" + str(ssid) + "'\n")
+            "ESSID='" + str(name) + "'\n")
     if key:
         f.write(r"Key='" + key + "'\n")
     else:
@@ -558,9 +434,16 @@ def CreateConfig(ssid, interface, security, key, ip='dhcp'):
     f.close()
     print("Alright, I have finished making the profile!")
 
+def IsConnected():
+    # If we are connected to a network, it lists it. Otherwise, it returns nothing (or an empty byte).
+    check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
+    if check == b'':
+        return False
+    else:
+        return True
+
 def CheckOutput(self, command):
-    # Run a command, return what it's output was, and convert it from bytes to
-    # unicode
+    # Run a command, return what it's output was, and convert it from bytes to unicode
     p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
     output = p.communicate()[0]
     output = output.decode("utf-8")
@@ -570,8 +453,10 @@ def get_network_pw(parent, message, title=''):
     # Returns user input as a string or None
     # If user does not input text it returns None, NOT AN EMPTY STRING.
     dialogWindow = Gtk.MessageDialog(parent,
-                  Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                  Gtk.MessageType.QUESTION, Gtk.ButtonsType.OK_CANCEL, message)
+                          Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                          Gtk.MessageType.QUESTION,
+                          Gtk.ButtonsType.OK_CANCEL,
+                          message)
 
     dialogWindow.set_title(title)
 
@@ -584,57 +469,60 @@ def get_network_pw(parent, message, title=''):
 
     dialogWindow.show_all()
     response = dialogWindow.run()
-    text = userEntry.get_text()
+    text = userEntry.get_text() 
     dialogWindow.destroy()
     if (response == Gtk.ResponseType.OK):
         return text
     else:
         return None
 
-def GetInterface(setit = None):
-    if setit is not None:
-        with open(interface_file, 'w') as f:
-            f.write(setit)
-            f.flush()
-        return setit
-    elif os.path.isfile(interface_file) is not True:
+def CheckGrep(self, grepCmd):
+    # Run a grep command, decode it from bytes to unicode, strip it of spaces,
+    # and return it's output.
+    p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
+    output = ((p.communicate()[0]).decode("utf-8")).strip()
+    return output
+
+def GetInterface():
+    if os.path.isfile(intFile) != True:
+        
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if device.startswith('wl'):
-                interface = device
-        if not interface:
-            interface = get_network_pw(self, "We could not automatically "+\
-                "detect your wireless interface. Please type it here. Leave "+\
-                "blank for NoWifiMode.", "Network Interface Required.")
-        with open(interface_file, 'w') as f:
-            f.write(interface)
-            f.flush()
-        return interface.strip()
+            if "wlp" or "wlan" in device:
+                interfaceName = device
+            else:
+                pass
+        if interfaceName == "":
+            intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
+            interfaceName = intNameCheck[166:172]     
+        if interfaceName == "":
+            interfaceName = get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
+        f = open(intFile, 'w')
+        f.write(interfaceName)
+        f.close()
+        return str(interfaceName).strip()
     else:
-        with open(interface_file, 'r') as f:
-            interface = f.read()
-        return interface.strip()
+        f = open(intFile, 'r')
+        interfaceName = f.readline()
+        f.close()   
+        return str(interfaceName).strip()
+
 
 def cleanup():
     # Clean up time
-    try:
-        os.unlink(iwlist_file)
-        os.unlink(iwconfig_file)
-    except:
-        pass
-    # To avoid race condition, we should unlink pid_file before unlock
-    os.unlink(pid_file)
     fcntl.lockf(fp, fcntl.LOCK_UN)
     fp.close()
-
-def main():
-    global gui
-    Gdk.threads_init()
-    Gdk.threads_enter()
-    gui = netgui()
-    Gdk.threads_leave()
-    Gtk.main()
+    os.unlink(pidFile)
+    try:
+        os.unlink(iwlistFile)
+        os.unlink(iwconfigFile)
+    except:
+        pass
 
 if __name__ == "__main__":
-    main()
     cleanup()
+    Gdk.threads_init()
+    Gdk.threads_enter()
+    netgui()
+    Gdk.threads_leave()
+    Gtk.main()

@@ -1,4 +1,4 @@
-# NetGUI v0.65
+# NetGUI v0.0.69
 
 NetGUI is an official fork of what was originally known as WiFiz. NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.
 
