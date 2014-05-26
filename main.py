@@ -138,9 +138,9 @@ class netgui(Gtk.Window):
         profileMenu = self.builder.get_object("profilesMenu")
         profiles = os.listdir("/etc/netctl/")
         # Iterate through profiles directory, and add to "Profiles" Menu #
-        for i in profiles:
-            if os.path.isfile("/etc/netctl/" + i):
-               profile = profileMenu.set_submenu(i)   
+        #for i in profiles:
+        #    if os.path.isfile("/etc/netctl/" + i):
+        #       profile = profileMenu.set_submenu(i)   
         # This should automatically detect their wireless device name. I'm not 100% sure
         # if it works on every computer, but we can only know from multiple tests. If
         # it doesn't work, I will re-implement the old way.
