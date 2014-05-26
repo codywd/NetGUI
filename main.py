@@ -66,7 +66,8 @@ fp = os.fdopen(os.open(pid_file, os.O_CREAT | os.O_WRONLY), 'w')
 try:
     fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
 except IOError:
-    print("We only allow one instance of netgui to be running at a time for precautionary reasons.")
+    print("We only allow one instance of netgui to be running at a time for " +
+        "''precautionary'' reasons.")
     sys.exit(1)
 
 fp.truncate()
@@ -75,14 +76,17 @@ fp.flush()
 
 # The main class of netgui. Nifty name, eh?
 class netgui(Gtk.Window):
-    # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong, but it works.
+    # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong,
+    # but it works.
     def __init__(self):
         self.InitUI()
 
-    # Since I LOVE everything to be organized, I use a separate InitUI function so it's clean.
+    # Since I LOVE everything to be organized, I use a separate InitUI function
+    # so it's clean.
     def InitUI(self):
-        
-        # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
+
+        # Create a "Builder", which basically allows me to import the Glade file
+        # for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
         self.builder.add_from_file(program_location + "/UI.glade")
@@ -92,7 +96,8 @@ class netgui(Gtk.Window):
         self.APindex = 0
         self.p = None
 
-        # Grab the "window1" attribute from UI.glade, and set it to show everything.
+        # Grab the "window1" attribute from UI.glade, and set it to show
+        # everything.
         window = self.builder.get_object("mainWindow")
         window.connect("delete-event", self.onExit)
 
@@ -106,7 +111,8 @@ class netgui(Gtk.Window):
 
         # Set Up Columns
         # renderer1 = The Cell renderer. Basically allows for text to show.
-        # column1 = The actual setup of the column. Arguments = title, CellRenderer, textIndex)
+        # column1 = The actual setup of the column.
+        # Arguments = title, CellRenderer, textIndex)
         # Actually append the column to the treeview.
         network_columns = ["ESSID","Strength","Encryption","Status"]
         for i in range(len(network_columns)):
@@ -142,16 +148,18 @@ class netgui(Gtk.Window):
         # Iterate through profiles directory, and add to "Profiles" Menu #
         for i in profiles:
             if os.path.isfile(config_directiory + i):
-                profile = profileMenu.get_submenu().append(Gtk.MenuItem(label=i))   
-        # This should automatically detect their wireless device name. I'm not 100% sure
-        # if it works on every computer, but we can only know from multiple tests. If
-        # it doesn't work, I will re-implement the old way.
+                profile = profileMenu.get_submenu().append(Gtk.MenuItem(label=i))
+        # This should automatically detect their wireless device name. I'm not
+        # 100% sure if it works on every computer, but we can only know from
+        # multiple tests. If it doesn't work, I will re-implement the old way.
         # Notify.init("NetGUI")
 
-        
+
         # self.interfaceName = GetInterface()
         # if self.interfaceName == "":
-        #     # n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in No-Wifi Mode. Scan Button is disabled.", "dialog-information")
+        #     # n = Notify.Notification.new("Could not detect interface!",
+            # "No interface was detected. Now running in No-Wifi Mode. Scan
+            # Button is disabled.", "dialog-information")
         #     # n.show()
         #     self.NoWifiScan(None)
         #     self.NoWifiMode = 1
@@ -184,7 +192,8 @@ class netgui(Gtk.Window):
         Gtk.main_quit()
         return True
 
-    # This class is only here to actually start running all the code in "onScan" in a separate process.
+    # This class is only here to actually start running all the code in "onScan"
+    # in a separate process.
     def startScan(self,e=None):
         self.netgui_pipe.send('Please Scan it.')
         self.wait_for_APs(self.netgui_pipe)
@@ -193,7 +202,8 @@ class netgui(Gtk.Window):
         # Start initial scan
         netgui_pipe, wpa_pipe = multiprocessing.Pipe()
         wpa_int = wpa_cli_interface(wpa_pipe)
-        p = multiprocessing.Process(target=wpa_int._really_scan, args=(wpa_pipe,))
+        p = multiprocessing.Process(target=wpa_int._really_scan,
+                                    args=(wpa_pipe,))
         p.daemon = True
         p.start()
         return wpa_int, netgui_pipe
@@ -263,27 +273,30 @@ class netgui(Gtk.Window):
                 network_interface.down(status_directiory, netinterface)
                 NetCTL.stopall(self)
                 NetCTL.start(self, profile)
-                n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+                n = Notify.Notification.new("Connected to new network!",
+                    "You are now connected to " + networkSSID,
+                    "dialog-information")
                 n.show()
             else:
                 networkSecurity = self.getSecurity(select)
-                key = get_network_pw(self, "Please enter network password", "Network Password Required.")
-                CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
+                key = get_network_pw(self, "Please enter network password",
+                    "Network Password Required.")
+                CreateConfig(networkSSID, self.interfaceName,
+                    networkSecurity, key)
                 try:
                     network_interface.down(self, netinterface)
                     NetCTL.stopall(self)
                     NetCTL.start(self, profile)
-                    n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+                    n = Notify.Notification.new("Connected to new network!",
+                        "You are now connected to " + networkSSID,
+                        "dialog-information")
                     n.show()
-                    #wx.MessageBox("You are now connected to " +
-                    #             str(nameofProfile).strip() + ".", "Connected.")
                 except:
-                    #wx.MessageBox("There has been an error, please try again. If"
-                    #              " it persists, please contact Cody Dostal at "
-                    #              "dostalcody@gmail.com.", "Error!")        
-                    n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
+                    n = Notify.Notification.new("Error!", "There was an error."+
+                        " Please report an issue at the github page if it " +
+                        "persists.", "dialog-information")
                     n.show()
-                    Notify.uninit()        
+                    Notify.uninit()
         elif self.NoWifiMode == 1:
             select = self.APList.get_selection()
             NWMprofile = self.getSSID(select)
@@ -292,12 +305,15 @@ class netgui(Gtk.Window):
                 network_interface.down(self, netinterface)
                 NetCTL.stopall(self)
                 NetCTL.start(self, NWMprofile)
-                n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + NWMprofile, "dialog-information")
+                n = Notify.Notification.new("Connected to new profile!",
+                    "You're now connected to "+NWMprofile, "dialog-information")
                 n.show()
-            except:    
-                n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
+            except:
+                n = Notify.Notification.new("Error!", "There was an error. "+
+                    "Please report an issue at the github page if it persists.",
+                    "dialog-information")
                 n.show()
-                Notify.uninit()   
+                Notify.uninit()
         self.refresh_APlist()
 
     def getSSID(self, selection):
@@ -320,14 +336,17 @@ class netgui(Gtk.Window):
         NetCTL.stop(self, profile)
         network_interface.down(self, interfaceName)
         self.startScan(None)
-        n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + networkSSID, "dialog-information")
-        n.show()        
+        n = Notify.Notification.new("Disconnected from network!",
+            "You're now disconnected from " + networkSSID, "dialog-information")
+        n.show()
 
     def prefClicked(self, menuItem):
-        # Setting up the cancel function here fixes a wierd bug where, if outside of the prefClicked function
-        # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
-        # and not destroy it, is it causes another bug where the dialog becomes a small little
-        # titlebar box. I don't know how to fix either besides this.
+        # Setting up the cancel function here fixes a wierd bug where, if
+        # outside of the prefClicked function it causes an extra button click
+        # for each time the dialog is hidden. The reason we hide the dialog and
+        # not destroy it, is it causes another bug where the dialog becomes a
+        # small little titlebar box. I don't know how to fix either besides
+        # this. TODO
         def OnLoad(self):
             f = open(interface_file, 'r')
             interfaceEntry.set_text(str(f.read()))
@@ -335,9 +354,9 @@ class netgui(Gtk.Window):
 
         def profBrowseClicked(self):
             dialog = Gtk.FileChooserDialog("Please Choose Your Profile", self,
-                                           Gtk.FileChooserAction.OPEN,
-                                           (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                                            Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+                                   Gtk.FileChooserAction.OPEN,
+                                   (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                                    Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
 
             response = dialog.run()
             if response == Gtk.ResponseType.OK:
@@ -351,8 +370,9 @@ class netgui(Gtk.Window):
             # print("Cancel Clicked.")
             preferencesDialog.hide()
 
-        # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
-        # and because it makes the program flow more, IMHO
+        # Setting up the saveClicked function within the prefClicked function
+        # just because it looks cleaner and because it makes the program flow
+        # more, IMHO
         def saveClicked(self):
             with open(interface_file, 'r+') as f:
                 interface = f.read()
@@ -372,7 +392,8 @@ class netgui(Gtk.Window):
         defaultProfBrowse = self.builder.get_object("fileChooser")
         defaultProfName = self.builder.get_object("defaultProfilePath")
 
-        # Connecting the "clicked" signals of each button to the relevant function.
+        # Connecting the "clicked" signals of each button to the relevant
+        # function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
         defaultProfBrowse.connect("clicked", profBrowseClicked)
@@ -388,8 +409,9 @@ class netgui(Gtk.Window):
         subprocess.Popen("yelp")
 
     def reportIssue(self, menuItem):
-        # Why would I need a local way of reporting issues when I can use github? Exactly.
-        # And since no more dependencies are caused by this, I have no problems with it.
+        # Why would I need a local way of reporting issues when I can use
+        # github? Exactly. And since no more dependencies are caused by this,
+        # I have no problems with it.
         pass
         # webbrowser.open("https://github.com/codywd/NetGUI/issues")
         # disabled, don't open a webbrowser as root, WTF?
@@ -399,7 +421,8 @@ class netgui(Gtk.Window):
         aboutDialog = self.builder.get_object("aboutDialog")
         # Opening the about dialog.
         aboutDialog.run()
-        # Hiding the about dialog. Read in "prefDialog" for why we hide, not destroy.
+        # Hiding the about dialog. Read in "prefDialog" for why we hide, not
+        # destroy.
         aboutDialog.hide()
 
 class NetCTL(object):
@@ -477,14 +500,14 @@ class network_interface:
             sys.exit(9)
 
 class wpa_cli_interface:
-    """This class handles the queuing, managment, and emit for scanning for 
+    """This class handles the queuing, managment, and emit for scanning for
     wifi networks.
     """
     def __init__(self, q):
         self.q = q
 
     def scan(self, callback):
-        '''make sure the interface we're about to scan on is ready before you 
+        '''make sure the interface we're about to scan on is ready before you
         call me'''
         self.q.send(callback)
 
@@ -506,7 +529,7 @@ class wpa_cli_interface:
     def emit(self, data, call):
         do = getattr(netgui, call, None)
         self.q.send(data)
-            
+
 
 def SSIDToProfileName(ssid):
     return profile_prefix + ssid
@@ -521,7 +544,8 @@ def CreateConfig(ssid, interface, security, key, ip='dhcp'):
     else:
         security = 'none'
     f = open(config_directiory + filename, 'w')
-    f.write("status_directiory='This profile was generated by netgui for " + str(ssid)+".'\n" +
+    f.write("status_directiory='This profile was generated by netgui for " +
+            str(ssid)+".'\n" +
             "Interface=" + str(interface) + "\n" +
             "Connection=wireless\n" +
             "Security=" + str(security) + "\n" +
@@ -535,7 +559,8 @@ def CreateConfig(ssid, interface, security, key, ip='dhcp'):
     print("Alright, I have finished making the profile!")
 
 def CheckOutput(self, command):
-    # Run a command, return what it's output was, and convert it from bytes to unicode
+    # Run a command, return what it's output was, and convert it from bytes to
+    # unicode
     p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
     output = p.communicate()[0]
     output = output.decode("utf-8")
@@ -545,10 +570,8 @@ def get_network_pw(parent, message, title=''):
     # Returns user input as a string or None
     # If user does not input text it returns None, NOT AN EMPTY STRING.
     dialogWindow = Gtk.MessageDialog(parent,
-                          Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                          Gtk.MessageType.QUESTION,
-                          Gtk.ButtonsType.OK_CANCEL,
-                          message)
+                  Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                  Gtk.MessageType.QUESTION, Gtk.ButtonsType.OK_CANCEL, message)
 
     dialogWindow.set_title(title)
 
@@ -561,7 +584,7 @@ def get_network_pw(parent, message, title=''):
 
     dialogWindow.show_all()
     response = dialogWindow.run()
-    text = userEntry.get_text() 
+    text = userEntry.get_text()
     dialogWindow.destroy()
     if (response == Gtk.ResponseType.OK):
         return text
