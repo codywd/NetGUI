@@ -11,7 +11,7 @@ import multiprocessing
 from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
-# Setting base app information, such as version, and configuration 
+# Setting base app information, such as version, and configuration
 # directories/files.
 
 if os.path.dirname(os.path.realpath(__file__)) is not '/usr/share/netgui':
@@ -40,7 +40,7 @@ imgs_directiory   = "/usr/share/netgui/imgs"
 license_directory = '/usr/share/licenses/netgui'
 pid_number        = os.getpid()
 
-# Allows for command line arguments. Currently only a "Help" argument, 
+# Allows for command line arguments. Currently only a "Help" argument,
 # but more to come.
 # TODO import ext libary to handel this for us
 for arg in sys.argv:
@@ -180,7 +180,7 @@ class netgui(Gtk.Window):
         NoWifiMode = 1
         for profile in profiles:
             if os.path.isfile(config_directiory + profile):
-                aps["row" + str(i)] = self.APStore.append([profile, 
+                aps["row" + str(i)] = self.APStore.append([profile,
                     "N/A in No-Wifi mode.", "N/A", "N/A"])
 
     def onExit(self, widget=None, event=None, data=None):
