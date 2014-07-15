@@ -42,6 +42,7 @@ for arg in sys.argv:
         print("Your netgui version is " + progVer + ".")
         sys.exit(0)
     if arg == '--develop' or arg =='-d':
+        print("Running in development mode. All files are set to be in the development folder.")
         progLoc = "./"
 
 
@@ -197,8 +198,9 @@ class netgui(Gtk.Window):
     def onScan(self, e=None):
         print("Please wait! Now Scanning.")
         wpacliFileHandler = open(wpacliFile, 'w')
-        InterfaceCtl.up(self, self.interfaceName)
-        subprocess.call(["wpa_cli", "scan"])
+        InterfaceCtl.down(self, self.interfaceName)
+        subprocess.call(["wpa_supplicant", "-B", "-i", self.interfaceName, "-c", "/etc/wpa_supplicant.conf"])
+        subprocess.call(["wpa_cli", "-i", self.interfaceName, "scan"])
         output=CheckOutput(self, "wpa_cli scan_results")
         wpacliFileHandler.write(output)
         wpacliFileHandler.close()
@@ -419,6 +421,10 @@ class InterfaceCtl(object):
     def up(self, interface):
         print("interface:: up: " + interface)
         subprocess.call(["ip", "link", "set", "up", "dev", interface])
+
+    def scan(self, interface):
+        print("iw:: scan: " + interface)
+        subprocess.call(["iw", "dev", interface, "scan"])
 
 def CreateConfig(name, interface, security, key, ip='dhcp'):
     print("Creating Profile! Don't interrupt!\n")
