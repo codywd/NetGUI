@@ -17,6 +17,9 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 4. netctl
 5. notify-osd
 
+## Known Issues
+1. Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory (https://github.com/codywd/NetGUI/issues/15). This issue is the #1 issue on our list. This issue stems from a bug upstream in the wpa package, and we can't fix it ourselves. To fix this issue, we have to rewrite the backend, which is what is being done now.
+
 ## General todo list / wish list
 
 - [ ] add tray icon
