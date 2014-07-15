@@ -18,7 +18,7 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.65"
+progVer = "0.7"
 conf_dir = "/etc/netctl/"
 statusDir = "/var/lib/netgui/"
 progLoc = "/usr/share/netgui/"
@@ -41,6 +41,9 @@ for arg in sys.argv:
     if arg == '--version' or arg == '-v':
         print("Your netgui version is " + progVer + ".")
         sys.exit(0)
+    if arg == '--develop' or arg =='-d':
+        progLoc = "./"
+
 
 if os.path.exists(statusDir):
     pass
