@@ -1,27 +1,38 @@
-0.0.69
+0.7
+1. Fixed issue #15: "Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory
+2. Fixed issue where wpa_cli ignored the NetGUI selected interface, even if set through preferences
+3. Changed dependency from notify-osd to notification-daemon. While I encounter issues if I DON'T use notify-osd, I will change it because it is a popular request.
+4. If a profile already exists, use it, and don't make a new one.
+
+Known issues for 0.7:
+1. Preferences dialog does not work (except for preferred interface)
+2. Help function does not work (has not been programmed at all)
+3. On every scan, the following error occurs: ```ctrl_iface exists and seems to be in use - cannot override it```
+
+0.6.9
 1. general version tick
 2. package build updated for AUR
 
-v0.0.67
+v0.6.7
 2 bugs fixed, #7 and an unsubmitted.
 
-0.0.66
+0.6.6
 1. Finishing touches on No wifi Mode.
 
-0.0.65
+0.6.5
 1. Manually change interface via preferences dialog.
 2. Profiles menu now states all currently created profiles.
 3. No wireless card? Disabled it? NetGUI still functions, just not with 
 the same abilities.
 
-0.0.6
+0.6
 1. Removed dependency for wireless-tools
 2. Changed scanning method to wpa_cli
 
 Known Issues for 0.6:
 1. Sometimes, a blank network will appear. I'm working on figuring out how to avoid this.
 
-0.0.5
+0.5
 1. Updated PKGBUILD
 2. Changed Quality from fractions to percenteges.
 3. Fixed netgui script to actually work.
@@ -29,7 +40,7 @@ Known Issues for 0.6:
 5. Added notifications to the program.
 6. Added new dependency: notify-osd
 
-0.0.4
+0.4
 1. Changed NetCTL to use "_" inbetween it's name and the name of the network when creating a profile, instead of "-", because of how systemd treats "-" as a special character.
 2. Fixed a bug where every network was either "Open" or "WEP." It now correctly states "WPA" if that is what it is.
 3. Fixed the column layout. Basically, "Connection Quality" listed the security type, and "Security Type" listed the connection quality.

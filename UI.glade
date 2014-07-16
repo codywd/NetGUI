@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.16.1 -->
 <interface>
-  <requires lib="gtk+" version="3.4"/>
+  <requires lib="gtk+" version="3.4" />
   <object class="GtkAboutDialog" id="aboutDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -9,7 +7,7 @@
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">NetGUI</property>
-    <property name="version">0.6</property>
+    <property name="version">0.7</property>
     <property name="copyright" translatable="yes">Copyright (c) 2013. Cody Dostal	</property>
     <property name="comments" translatable="yes">NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.</property>
     <property name="website">https://github.com/codywd/NetGUI</property>
@@ -63,7 +61,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
           </packing>
         </child>
         <child>
-          <placeholder/>
+          <placeholder />
         </child>
       </object>
     </child>
@@ -97,7 +95,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">NetGUI</property>
     <property name="window_position">center</property>
-    <signal name="delete-event" handler="onExit" swapped="no"/>
+    <signal handler="onExit" name="delete-event" swapped="no" />
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>
@@ -124,7 +122,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Scan for New Networks within range.</property>
                         <property name="label" translatable="yes">Scan for New Networks.</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="onScan" swapped="no"/>
+                        <signal handler="onScan" name="activate" swapped="no" />
                       </object>
                     </child>
                     <child>
@@ -140,7 +138,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Exit the program.</property>
                         <property name="label" translatable="yes">Exit</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="onExit" swapped="no"/>
+                        <signal handler="onExit" name="activate" swapped="no" />
                       </object>
                     </child>
                   </object>
@@ -164,7 +162,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Edit the preferences for the program.</property>
                         <property name="label" translatable="yes">Preferences</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="onPrefClicked" swapped="no"/>
+                        <signal handler="onPrefClicked" name="activate" swapped="no" />
                       </object>
                     </child>
                   </object>
@@ -196,7 +194,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Access the help documents.</property>
                         <property name="label" translatable="yes">Help with NetGUI</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="onHelpClicked" swapped="no"/>
+                        <signal handler="onHelpClicked" name="activate" swapped="no" />
                       </object>
                     </child>
                     <child>
@@ -212,7 +210,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Report an Issue with NetGUI.</property>
                         <property name="label" translatable="yes">Report an Issue...</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="onIssueReport" swapped="no"/>
+                        <signal handler="onIssueReport" name="activate" swapped="no" />
                       </object>
                     </child>
                     <child>
@@ -228,7 +226,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">About NetGUI</property>
                         <property name="label" translatable="yes">About NetGUI</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="onAboutClicked" swapped="no"/>
+                        <signal handler="onAboutClicked" name="activate" swapped="no" />
                       </object>
                     </child>
                   </object>
@@ -254,7 +252,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">Scan</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image1</property>
-                <signal name="clicked" handler="onScan" swapped="no"/>
+                <signal handler="onScan" name="clicked" swapped="no" />
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -269,7 +267,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">Connect</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image2</property>
-                <signal name="clicked" handler="onConnect" swapped="no"/>
+                <signal handler="onConnect" name="clicked" swapped="no" />
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -284,7 +282,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">dConnect</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image3</property>
-                <signal name="clicked" handler="onDConnect" swapped="no"/>
+                <signal handler="onDConnect" name="clicked" swapped="no" />
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -299,7 +297,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">toolbutton1</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image5</property>
-                <signal name="clicked" handler="onPrefClicked" swapped="no"/>
+                <signal handler="onPrefClicked" name="clicked" swapped="no" />
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -324,7 +322,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">Exit</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image4</property>
-                <signal name="clicked" handler="onExit" swapped="no"/>
+                <signal handler="onExit" name="clicked" swapped="no" />
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -354,7 +352,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="enable_grid_lines">horizontal</property>
                 <property name="enable_tree_lines">True</property>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection1"/>
+                  <object class="GtkTreeSelection" id="treeview-selection1" />
                 </child>
               </object>
             </child>
@@ -381,7 +379,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
       </object>
     </child>
   </object>
-  <object class="GtkListStore" id="liststore1"/>
+  <object class="GtkListStore" id="liststore1" />
   <object class="GtkDialog" id="prefDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -459,7 +457,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                   <object class="GtkEntry" id="defaultProfilePath">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="invisible_char">&#9679;</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -629,7 +627,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                   <object class="GtkEntry" id="editorPath">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="invisible_char">&#9679;</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
