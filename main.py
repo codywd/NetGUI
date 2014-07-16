@@ -129,7 +129,7 @@ class netgui(Gtk.Window):
         "onExit": self.onExit,
         "onAboutClicked": self.aboutClicked,
         "onScan": self.startScan,
-        "onConnect": self.connectClicked,
+        "onConnect": self.profileExists,
         "onDConnect": self.dConnectClicked,
         "onPrefClicked": self.prefClicked,
         "onHelpClicked": self.helpClicked,
@@ -258,47 +258,86 @@ class netgui(Gtk.Window):
                         self.APStore.set(aps["row" + str(i)], 3, "No")              
                 i=i+1
 
-    def connectClicked(self, menuItem):
-        print(str(self.NoWifiMode))
-        if self.NoWifiMode == 0:
+    def profileExists(self, menuItem):
+        select = self.APList.get_selection()
+        SSID = self.getSSID(select)
+        for profile in os.listdir("/etc/netctl/"):
+            if os.path.isfile("/etc/netctl/" + profile):
+                with open("/etc/netctl/" + profile, 'r') as current_profile:
+                    current_profile_name = profile
+                    for line in current_profile:
+                        if "ESSID" in line.strip():
+                            ESSIDName = line[6:]
+                            if str(SSID).lower() in ESSIDName.lower():
+                                self.connectClicked(1, current_profile_name)
+                            else:
+                                self.connectClicked(0, None)
+                        else:
+                            pass
+            else:
+                pass
+
+    def connectClicked(self, doesProfileExist, profileName):
+        '''process a connection request from the user'''
+        if doesProfileExist == 1:
             select = self.APList.get_selection()
             networkSSID = self.getSSID(select)
-            profile = "netgui_" + networkSSID
-            netinterface = GetInterface()
-            if os.path.isfile(conf_dir + profile):
-                InterfaceCtl.down(self, netinterface)
-                NetCTL.stopall(self)
-                NetCTL.start(self, profile)
-                n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
-                n.show()
-            else:
-                networkSecurity = self.getSecurity(select)
-                key = self.get_network_pw()
-                CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
+            n = Notify.Notification.new("Found existing profile.",
+                "NetCTL found an existing profile for this network. Connecting to " + networkSSID + " using profile " + profileName)
+            n.show()
+            netinterface = self.interfaceName
+            InterfaceCtl.down(self, netinterface)
+            NetCTL.stopall(self)
+            NetCTL.start(self, profileName)
+            n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+            n.show()
+
+        elif doesProfileExist == 0:
+            if self.NoWifiMode == 0:
+                select = self.APList.get_selection()
+                networkSSID = self.getSSID(select)
+                profile = SSIDToProfileName(networkSSID)
+                netinterface = self.interfaceName
+                if os.path.isfile(config_directory + profile):
+                    InterfaceCtl.down(self, netinterface)
+                    NetCTL.stopall(self)
+                    NetCTL.start(profile)
+                    n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+                    n.show()
+                else:
+                    networkSecurity = self.getSecurity(select)
+                    key = get_network_pw(self, "Please enter network password", "Network Password Required.")
+                    CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
+                    try:
+                        InterfaceCtl.down(self, netinterface)
+                        NetCTL.stopall()
+                        NetCTL.start(profile)
+                        n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+                        n.show()
+                        #wx.MessageBox("You are now connected to " +
+                        #             str(nameofProfile).strip() + ".", "Connected.")
+                    except:
+                        #wx.MessageBox("There has been an error, please try again. If"
+                        #              " it persists, please contact Cody Dostal at "
+                        #              "dostalcody@gmail.com.", "Error!")
+                        n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
+                        n.show()
+                        Notify.uninit()
+            elif self.NoWifiMode == 1:
+                select = self.APList.get_selection()
+                NWMprofile = self.getSSID(select)
+                netinterface = GetInterface()
                 try:
                     InterfaceCtl.down(self, netinterface)
                     NetCTL.stopall(self)
-                    NetCTL.start(self, profile)
-                    n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
+                    NetCTL.start(self, NWMprofile)
+                    n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + NWMprofile, "dialog-information")
                     n.show()
                 except:
                     n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                     n.show()
-                    Notify.uninit()        
-        elif self.NoWifiMode == 1:
-            select = self.APList.get_selection()
-            NWMprofile = self.getSSID(select)
-            netinterface = GetInterface()
-            try:
-                InterfaceCtl.down(self, netinterface)
-                NetCTL.stopall(self)
-                NetCTL.start(self, NWMprofile)
-                n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + NWMprofile, "dialog-information")
-                n.show()
-            except:    
-                n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
-                n.show()
-                Notify.uninit()   
+                    Notify.uninit()
+            self.refresh_APlist()
 
     def get_network_pw(self):
         # Returns user input as a string or None
