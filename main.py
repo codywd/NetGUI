@@ -139,15 +139,17 @@ class netgui(Gtk.Window):
         self.builder.connect_signals(handlers)
         
         # Populate profiles menu
+        menu = self.builder.get_object("menubar1")
         profileMenu = self.builder.get_object("profilesMenu")
+        profileMenu.set_submenu(Gtk.Menu())
         profiles = os.listdir("/etc/netctl/")
         # Iterate through profiles directory, and add to "Profiles" Menu #
-        #for i in profiles:
-        #    if os.path.isfile("/etc/netctl/" + i):
-        #        profile = profileMenu.set_submenu(i)   
-        # This should automatically detect their wireless device name. I'm not 100% sure
-        # if it works on every computer, but we can only know from multiple tests. If
-        # it doesn't work, I will re-implement the old way.
+        for i in profiles:
+            if os.path.isfile("/etc/netctl/" + i):
+                profile = profileMenu.get_submenu().append(Gtk.MenuItem(label=i))
+        #This should automatically detect their wireless device name. I'm not 100% sure
+        #if it works on every computer, but we can only know from multiple tests. If
+        #it doesn't work, I will re-implement the old way.
         Notify.init("NetGUI")
             
         self.interfaceName = GetInterface()
@@ -207,6 +209,7 @@ class netgui(Gtk.Window):
         print("Done Scanning!")
     
     def checkScan(self):
+        print("Running Check Scan")
         self.APStore.clear()
         
         with open(wpacliFile, 'r') as tsv:
@@ -270,7 +273,7 @@ class netgui(Gtk.Window):
                 n.show()
             else:
                 networkSecurity = self.getSecurity(select)
-                key = get_network_pw(self, "Please enter network password", "Network Password Required.")
+                key = self.get_network_pw()
                 CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                 try:
                     InterfaceCtl.down(self, netinterface)
@@ -278,12 +281,7 @@ class netgui(Gtk.Window):
                     NetCTL.start(self, profile)
                     n = Notify.Notification.new("Connected to new network!", "You are now connected to " + networkSSID, "dialog-information")
                     n.show()
-                    #wx.MessageBox("You are now connected to " +
-                    #             str(nameofProfile).strip() + ".", "Connected.")
                 except:
-                    #wx.MessageBox("There has been an error, please try again. If"
-                    #              " it persists, please contact Cody Dostal at "
-                    #              "dostalcody@gmail.com.", "Error!")        
                     n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                     n.show()
                     Notify.uninit()        
@@ -301,7 +299,31 @@ class netgui(Gtk.Window):
                 n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                 n.show()
                 Notify.uninit()   
-            
+
+    def get_network_pw(self):
+        # Returns user input as a string or None
+        # If user does not input text it returns None, NOT AN EMPTY STRING.
+        dialogWindow = Gtk.MessageDialog(Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                                          Gtk.MessageType.QUESTION,
+                                          Gtk.ButtonsType.OK_CANCEL,
+                                          "Please enter the password.")
+        dialogWindow.set_title("Password Required")
+
+        dialogBox = dialogWindow.get_content_area()
+        userEntry = Gtk.Entry()
+        userEntry.set_visibility(False)
+        userEntry.set_invisible_char("*")
+        userEntry.set_size_request(250,0)
+        dialogBox.pack_end(userEntry, False, False, 0)
+
+        dialogWindow.show_all()
+        response = dialogWindow.run()
+        text = userEntry.get_text()
+        dialogWindow.destroy()
+        if (response == Gtk.ResponseType.OK):
+            return text
+        else:
+            return None
     
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
@@ -457,33 +479,6 @@ def CheckOutput(self, command):
     output = p.communicate()[0]
     output = output.decode("utf-8")
     return output
-
-def get_network_pw(parent, message, title=''):
-    # Returns user input as a string or None
-    # If user does not input text it returns None, NOT AN EMPTY STRING.
-    dialogWindow = Gtk.MessageDialog(parent,
-                          Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                          Gtk.MessageType.QUESTION,
-                          Gtk.ButtonsType.OK_CANCEL,
-                          message)
-
-    dialogWindow.set_title(title)
-
-    dialogBox = dialogWindow.get_content_area()
-    userEntry = Gtk.Entry()
-    userEntry.set_visibility(False)
-    userEntry.set_invisible_char("*")
-    userEntry.set_size_request(250,0)
-    dialogBox.pack_end(userEntry, False, False, 0)
-
-    dialogWindow.show_all()
-    response = dialogWindow.run()
-    text = userEntry.get_text() 
-    dialogWindow.destroy()
-    if (response == Gtk.ResponseType.OK):
-        return text
-    else:
-        return None
 
 def CheckGrep(self, grepCmd):
     # Run a grep command, decode it from bytes to unicode, strip it of spaces,
