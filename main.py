@@ -190,8 +190,10 @@ class netgui(Gtk.Window):
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
     def startScan(self, e):
-        os.remove(scanFile)
-        os.remove(statusDir + "final_results.log")
+        if os.path.exists(scanFile):
+            os.remove(scanFile)
+        if os.path.exists(statusDir + "final_results.log"):
+            os.remove(statusDir + "final_results.log")
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
         self.p.join()
@@ -213,7 +215,7 @@ class netgui(Gtk.Window):
 
         with open(statusDir + "final_results.log") as tsv:
             self.APStore.clear()
-            
+
             r = csv.reader(tsv, dialect='excel-tab')
             aps = {}
             i = 0
@@ -292,9 +294,9 @@ class netgui(Gtk.Window):
             if self.NoWifiMode == 0:
                 select = self.APList.get_selection()
                 networkSSID = self.getSSID(select)
-                profile = SSIDToProfileName(networkSSID)
+                profile = self.SSIDToProfileName(networkSSID)
                 netinterface = self.interfaceName
-                if os.path.isfile(config_directory + profile):
+                if os.path.isfile(conf_dir + profile):
                     InterfaceCtl.down(self, netinterface)
                     NetCTL.stopall(self)
                     NetCTL.start(profile)
@@ -302,7 +304,7 @@ class netgui(Gtk.Window):
                     n.show()
                 else:
                     networkSecurity = self.getSecurity(select)
-                    key = self.get_network_pw(self, "Please enter network password", "Network Password Required.")
+                    key = self.get_network_pw()
                     CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                     try:
                         InterfaceCtl.down(self, netinterface)
@@ -334,14 +336,13 @@ class netgui(Gtk.Window):
                     n.show()
                     Notify.uninit()
             self.refresh_APlist()
+    def SSIDToProfileName(self, profile):
+        return profile + "_netgui"
 
     def get_network_pw(self):
         # Returns user input as a string or None
         # If user does not input text it returns None, NOT AN EMPTY STRING.
-        dialogWindow = Gtk.MessageDialog(Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                                          Gtk.MessageType.QUESTION,
-                                          Gtk.ButtonsType.OK_CANCEL,
-                                          "Please enter the password.")
+        dialogWindow = Gtk.MessageDialog()
         dialogWindow.set_title("Password Required")
 
         dialogBox = dialogWindow.get_content_area()
@@ -363,7 +364,7 @@ class netgui(Gtk.Window):
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter != None:
-            return model[treeiter][0]
+            return model[treeiter][0]c
 
     def getSecurity(self, selection):
         model, treeiter = selection.get_selected()
@@ -378,6 +379,7 @@ class netgui(Gtk.Window):
         profile = "netgui_" + networkSSID
         interfaceName = GetInterface()
         NetCTL.stop(self, profile)
+        NetCTL.stopall(self)
         InterfaceCtl.down(self, interfaceName)
         self.startScan(None)
         n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + networkSSID, "dialog-information")
