@@ -6,11 +6,9 @@ import fcntl
 import fileinput
 import multiprocessing
 import os
-import re
+import shutil
 import subprocess
 import sys
-import threading
-import time
 import webbrowser
 
 # Import Third Party Libraries
@@ -25,7 +23,7 @@ progLoc = "/usr/share/netgui/"
 intFile = statusDir + "interface.cfg"
 license_dir = '/usr/share/licenses/netgui/'
 iwconfigFile = statusDir + "iwlist.log"
-wpacliFile = statusDir + "wpa_cli.log"
+scanFile = statusDir + "scan_results.log"
 iwlistFile = statusDir + "iwlist.log"
 pidFile = statusDir + "program.pid"
 imgLoc = "/usr/share/netgui/imgs"
@@ -33,7 +31,7 @@ prefFile = statusDir + "preferences.cfg"
 pidNumber = os.getpid()
 
 # Allows for command line arguments. Currently only a "Help" argument, but more to come.
-# TODO import ext libary to handel this for us
+# TODO import ext library to handle this for us
 for arg in sys.argv:
     if arg == '--help' or arg == '-h':
         print("netgui; The NetCTL GUI! \nWe need root :)")
@@ -183,7 +181,7 @@ class netgui(Gtk.Window):
                 i = i + 1
             
     def onExit(self, e):
-        if self.p == None:
+        if self.p is None:
             pass
         else:
             self.p.terminate()
@@ -192,39 +190,35 @@ class netgui(Gtk.Window):
 
     # This class is only here to actually start running all the code in "onScan" in a separate process.
     def startScan(self, e):
+        os.remove(scanFile)
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
         self.p.join()
         self.checkScan()
-        
+
     def onScan(self, e=None):
         print("Please wait! Now Scanning.")
-        wpacliFileHandler = open(wpacliFile, 'w')
-        InterfaceCtl.down(self, self.interfaceName)
-        subprocess.call(["wpa_supplicant", "-B", "-i", self.interfaceName, "-c", "/etc/wpa_supplicant.conf"])
-        subprocess.call(["wpa_cli", "-i", self.interfaceName, "scan"])
-        output=CheckOutput(self, "wpa_cli scan_results")
-        wpacliFileHandler.write(output)
-        wpacliFileHandler.close()
+        # Huge thanks to joukewitteveen on GitHub for the following command!! Slightly modified from his comment
+        subprocess.call('bash -c "source /usr/lib/network/globals; source /usr/lib/network/wpa; wpa_supplicant_scan ' + self.interfaceName + ' 3,4,5" >> ' + scanFile, shell=True)
         print("Done Scanning!")
-    
+
     def checkScan(self):
-        print("Running Check Scan")
-        self.APStore.clear()
-        
-        with open(wpacliFile, 'r') as tsv:
+        sf = open(scanFile, 'r')
+        realdir = sf.readline()
+        realdir = realdir.strip()
+        print(realdir)
+        sf.close()
+        shutil.move(realdir, statusDir + "final_results.log")
+
+        with open(statusDir + "final_results.log") as tsv:
             r = csv.reader(tsv, dialect='excel-tab')
-            next(r)
-            next(r)
             aps = {}
             i = 0
-            for row in r:                
-                network = row[4]            
-                if network == "":
-                    next(r)
-                aps["row" + str(i)] = self.APStore.append([network, "", "", ""])   
-                
-                quality = row[2]
+            for row in r:
+                network = row[2]
+                aps["row" + str(i)] = self.APStore.append([network, "", "", ""])
+
+                quality = row[0]
                 if int(quality) <= -100:
                     percent = "0%"
                 elif int(quality) >= -50:
@@ -233,29 +227,28 @@ class netgui(Gtk.Window):
                     fquality = (2 * (int(quality) + 100))
                     percent = str(fquality) + "%"
                 self.APStore.set(aps["row" + str(i)], 1, percent)
-                
-                security = row[3]
-                if "WPA" and "PSK" and not "TKIP" in security:
-                    encryption = "WPA2-PSK"
-                elif "WPA" and "TKIP" in security:
-                    encryption = "WPA2-TKIP"
+
+                security = row[1]
+                if "WPA" in security:
+                    encryption = "WPA2"
                 elif "OPENSSID" in security:
                     encryption = "Open"
+                elif "WPS" in security:
+                    encryption = "WPS"
                 elif "WEP" in security:
                     encryption = "WEP"
                 else:
                     encryption = "Unknown"
                 self.APStore.set(aps["row" + str(i)], 2, encryption)
-                
-                
-                if IsConnected() == False:
+
+                if IsConnected() is False:
                     self.APStore.set(aps["row" + str(i)], 3, "No")
                 else:
                     connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
                     if network in connectedNetwork:
                         self.APStore.set(aps["row" + str(i)], 3, "Yes")
                     else:
-                        self.APStore.set(aps["row" + str(i)], 3, "No")              
+                        self.APStore.set(aps["row" + str(i)], 3, "No")
                 i=i+1
 
     def profileExists(self, menuItem):
@@ -279,7 +272,7 @@ class netgui(Gtk.Window):
 
     def connectClicked(self, doesProfileExist, profileName):
         '''process a connection request from the user'''
-        if doesProfileExist == 1:
+        if doesProfileExist is 1:
             select = self.APList.get_selection()
             networkSSID = self.getSSID(select)
             n = Notify.Notification.new("Found existing profile.",
@@ -306,7 +299,7 @@ class netgui(Gtk.Window):
                     n.show()
                 else:
                     networkSecurity = self.getSecurity(select)
-                    key = get_network_pw(self, "Please enter network password", "Network Password Required.")
+                    key = self.get_network_pw(self, "Please enter network password", "Network Password Required.")
                     CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                     try:
                         InterfaceCtl.down(self, netinterface)
@@ -466,7 +459,7 @@ class NetCTL(object):
 
     def restart(self, network):
         print("netctl:: restart" + network)
-        subprocess.call(["netctl", "restart", profile])
+        subprocess.call(["netctl", "restart", network])
 
 class InterfaceCtl(object):
     # Control the network interface, a.k.a wlan0 or eth0
@@ -539,7 +532,7 @@ def GetInterface():
             intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
             interfaceName = intNameCheck[166:172]     
         if interfaceName == "":
-            interfaceName = get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
+            interfaceName = netgui.get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
         f = open(intFile, 'w')
         f.write(interfaceName)
         f.close()
