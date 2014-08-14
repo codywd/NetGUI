@@ -1,7 +1,0 @@
-Successfully initialized wpa_supplicant
-Could not set interface wlp9s0 flags (UP): Operation not permitted
-nl80211: Could not set interface 'wlp9s0' UP
-Could not set interface wlp9s0 flags (UP): Operation not permitted
-WEXT: Could not set interface 'wlp9s0' UP
-wlp9s0: Failed to initialize driver interface
-/tmp/essid.wDo5Q1i5
