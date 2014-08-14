@@ -191,6 +191,7 @@ class netgui(Gtk.Window):
     # This class is only here to actually start running all the code in "onScan" in a separate process.
     def startScan(self, e):
         os.remove(scanFile)
+        os.remove(statusDir + "final_results.log")
         self.p = multiprocessing.Process(target=self.onScan)
         self.p.start()
         self.p.join()
@@ -211,6 +212,8 @@ class netgui(Gtk.Window):
         shutil.move(realdir, statusDir + "final_results.log")
 
         with open(statusDir + "final_results.log") as tsv:
+            self.APStore.clear()
+            
             r = csv.reader(tsv, dialect='excel-tab')
             aps = {}
             i = 0
