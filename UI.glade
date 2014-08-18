@@ -1,5 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="3.4" />
+  <requires lib="gtk+" version="3.4"/>
   <object class="GtkAboutDialog" id="aboutDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -61,11 +63,12 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
           </packing>
         </child>
         <child>
-          <placeholder />
+          <placeholder/>
         </child>
       </object>
     </child>
   </object>
+  <object class="GtkAction" id="action1"/>
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -95,7 +98,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">NetGUI</property>
     <property name="window_position">center</property>
-    <signal handler="onExit" name="delete-event" swapped="no" />
+    <signal name="delete-event" handler="onExit" swapped="no"/>
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>
@@ -122,7 +125,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Scan for New Networks within range.</property>
                         <property name="label" translatable="yes">Scan for New Networks.</property>
                         <property name="use_underline">True</property>
-                        <signal handler="onScan" name="activate" swapped="no" />
+                        <signal name="activate" handler="onScan" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -138,7 +141,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Exit the program.</property>
                         <property name="label" translatable="yes">Exit</property>
                         <property name="use_underline">True</property>
-                        <signal handler="onExit" name="activate" swapped="no" />
+                        <signal name="activate" handler="onExit" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -162,7 +165,22 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Edit the preferences for the program.</property>
                         <property name="label" translatable="yes">Preferences</property>
                         <property name="use_underline">True</property>
-                        <signal handler="onPrefClicked" name="activate" swapped="no" />
+                        <signal name="activate" handler="onPrefClicked" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem" id="separator">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="switchMenu">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Switch to Profile View</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="onSwitch" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -194,7 +212,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Access the help documents.</property>
                         <property name="label" translatable="yes">Help with NetGUI</property>
                         <property name="use_underline">True</property>
-                        <signal handler="onHelpClicked" name="activate" swapped="no" />
+                        <signal name="activate" handler="onHelpClicked" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -210,7 +228,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">Report an Issue with NetGUI.</property>
                         <property name="label" translatable="yes">Report an Issue...</property>
                         <property name="use_underline">True</property>
-                        <signal handler="onIssueReport" name="activate" swapped="no" />
+                        <signal name="activate" handler="onIssueReport" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -226,7 +244,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <property name="tooltip_text" translatable="yes">About NetGUI</property>
                         <property name="label" translatable="yes">About NetGUI</property>
                         <property name="use_underline">True</property>
-                        <signal handler="onAboutClicked" name="activate" swapped="no" />
+                        <signal name="activate" handler="onAboutClicked" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -252,7 +270,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">Scan</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image1</property>
-                <signal handler="onScan" name="clicked" swapped="no" />
+                <signal name="clicked" handler="onScan" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -267,7 +285,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">Connect</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image2</property>
-                <signal handler="onConnect" name="clicked" swapped="no" />
+                <signal name="clicked" handler="onConnect" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -282,7 +300,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">dConnect</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image3</property>
-                <signal handler="onDConnect" name="clicked" swapped="no" />
+                <signal name="clicked" handler="onDConnect" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -297,7 +315,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">toolbutton1</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image5</property>
-                <signal handler="onPrefClicked" name="clicked" swapped="no" />
+                <signal name="clicked" handler="onPrefClicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -322,7 +340,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="label" translatable="yes">Exit</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image4</property>
-                <signal handler="onExit" name="clicked" swapped="no" />
+                <signal name="clicked" handler="onExit" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -352,7 +370,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                 <property name="enable_grid_lines">horizontal</property>
                 <property name="enable_tree_lines">True</property>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection1" />
+                  <object class="GtkTreeSelection" id="treeview-selection1"/>
                 </child>
               </object>
             </child>
@@ -379,7 +397,97 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
       </object>
     </child>
   </object>
-  <object class="GtkListStore" id="liststore1" />
+  <object class="GtkListStore" id="liststore1"/>
+  <object class="GtkDialog" id="passwordDialog">
+    <property name="can_focus">False</property>
+    <property name="type">popup</property>
+    <property name="title" translatable="yes">Network Password</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog-vbox2">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area2">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="cancelBtn">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="okBtn">
+                <property name="label">gtk-ok</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="relief">half</property>
+                <property name="use_stock">True</property>
+                <property name="xalign">0.47999998927116394</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="box6">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel" id="pwdLbl">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">What is the password?</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="userEntry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkDialog" id="prefDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -445,8 +553,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -457,7 +563,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                   <object class="GtkEntry" id="defaultProfilePath">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">&#9679;</property>
+                    <property name="invisible_char">●</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -483,8 +589,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">0</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -497,8 +601,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -511,8 +613,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -525,8 +625,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">3</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -570,8 +668,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">1</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -615,8 +711,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">2</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -627,7 +721,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                   <object class="GtkEntry" id="editorPath">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">&#9679;</property>
+                    <property name="invisible_char">●</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -652,8 +746,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">3</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -665,8 +757,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -677,8 +767,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">4</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
           </object>

@@ -29,6 +29,7 @@ pidFile = statusDir + "program.pid"
 imgLoc = "/usr/share/netgui/imgs"
 prefFile = statusDir + "preferences.cfg"
 pidNumber = os.getpid()
+argNoWifi = 0
 
 # Allows for command line arguments. Currently only a "Help" argument, but more to come.
 # TODO import ext library to handle this for us
@@ -42,6 +43,9 @@ for arg in sys.argv:
     if arg == '--develop' or arg =='-d':
         print("Running in development mode. All files are set to be in the development folder.")
         progLoc = "./"
+    if arg == '--nowifi' or arg =='-n':
+        print("Running in No Wifi mode!")
+        argNoWifi = 1
 
 
 if os.path.exists(statusDir):
@@ -65,6 +69,33 @@ except IOError:
 
 fp.write(str(pidNumber)+"\n")
 fp.flush()
+
+
+class PasswordDialog(Gtk.Dialog):
+    def __init_(self, parent):
+        Gtk.Dialog.__init__(self, "My Dialog", parent, 0,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+            Gtk.STOCK_OK, Gtk.ResponseType.OK))
+
+        self.set_default_size(150, 100)
+
+        box = self.get_content_area()
+        userEntry = Gtk.Entry()
+        userEntry.set_visibility(False)
+        userEntry.set_invisible_char("*")
+        userEntry.set_size_request(250, 0)
+        box.add(userEntry)
+
+        self.show_all()
+        text = userEntry.get_text()
+        self.GetText(text)
+
+    def GetText(self, pwd):
+        if pwd != "" or " " or None:
+            return pwd
+        else:
+            return None
+
 
 # The main class of netgui. Nifty name, eh?
 class netgui(Gtk.Window):
@@ -124,6 +155,7 @@ class netgui(Gtk.Window):
 
         # Set all the handlers I defined in glade to local functions.
         handlers = {
+        "onSwitch": self.onSwitch,
         "onExit": self.onExit,
         "onAboutClicked": self.aboutClicked,
         "onScan": self.startScan,
@@ -158,6 +190,10 @@ class netgui(Gtk.Window):
             self.NoWifiMode = 1
             ScanButton.props.sensitive = False
             print(str(self.NoWifiMode))
+        elif argNoWifi is 1:
+            self.NoWifiScan(None)
+            self.NoWifiMode = 1
+            ScanButton.props.sensitive = False
         else:
             self.startScan(None)
             self.NoWifiMode = 0
@@ -166,7 +202,12 @@ class netgui(Gtk.Window):
         # Start initial scan
         window.show_all()
         
-        
+    def onSwitch(self, e):
+        self.APStore.clear()
+        self.NoWifiScan(self)
+        self.NoWifiMode = 1
+        argNoWifi = 1
+
     def NoWifiScan(self, e):
         aps = {}
         profiles = os.listdir("/etc/netctl/")
@@ -209,8 +250,8 @@ class netgui(Gtk.Window):
         sf = open(scanFile, 'r')
         realdir = sf.readline()
         realdir = realdir.strip()
-        print(realdir)
         sf.close()
+        print(realdir)
         shutil.move(realdir, statusDir + "final_results.log")
 
         with open(statusDir + "final_results.log") as tsv:
@@ -335,36 +376,37 @@ class netgui(Gtk.Window):
                     n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the github page if it persists.", "dialog-information")
                     n.show()
                     Notify.uninit()
-            self.refresh_APlist()
+            self.startScan(self)
+
     def SSIDToProfileName(self, profile):
         return profile + "_netgui"
 
     def get_network_pw(self):
-        # Returns user input as a string or None
-        # If user does not input text it returns None, NOT AN EMPTY STRING.
-        dialogWindow = Gtk.MessageDialog()
-        dialogWindow.set_title("Password Required")
 
-        dialogBox = dialogWindow.get_content_area()
-        userEntry = Gtk.Entry()
-        userEntry.set_visibility(False)
-        userEntry.set_invisible_char("*")
-        userEntry.set_size_request(250,0)
-        dialogBox.pack_end(userEntry, False, False, 0)
+        def okClicked(self):
+            return pwd.get_text()
+            pwDialog.hide()
 
-        dialogWindow.show_all()
-        response = dialogWindow.run()
-        text = userEntry.get_text()
-        dialogWindow.destroy()
-        if (response == Gtk.ResponseType.OK):
-            return text
-        else:
+        def cancelClicked(self):
             return None
-    
+            pwDialog.hide()
+
+        #Getting the about dialog from UI.glade
+        pwDialog = self.builder.get_object("passwordDialog")
+        okBtn = self.builder.get_object("okBtn")
+        cancelBtn = self.builder.get_object("cancelBtn")
+        pwd = self.builder.get_object("userEntry")
+        # Opening the about dialog.
+        okBtn.connect("clicked", okClicked)
+        cancelBtn.connect("clicked", cancelClicked)
+        pwDialog.run()
+
+        # Hiding the about dialog. Read in "prefDialog" for why we hide, not destroy.
+
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter != None:
-            return model[treeiter][0]c
+            return model[treeiter][0]
 
     def getSecurity(self, selection):
         model, treeiter = selection.get_selected()
@@ -386,7 +428,7 @@ class netgui(Gtk.Window):
         n.show()        
         
     def prefClicked(self, menuItem):
-        # Setting up the cancel function here fixes a wierd bug where, if outside of the prefClicked function
+        # Setting up the cancel function here fixes a weird bug where, if outside of the prefClicked function
         # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
         # and not destroy it, is it causes another bug where the dialog becomes a small little
         # titlebar box. I don't know how to fix either besides this.
@@ -443,6 +485,7 @@ class netgui(Gtk.Window):
         # Hiding the about dialog. Read in "prefDialog" for why we hide, not destroy.
         aboutDialog.hide()
 
+
 class NetCTL(object):
     # These functions are to separate the Netctl code
     # from the GUI code.
@@ -466,6 +509,7 @@ class NetCTL(object):
         print("netctl:: restart" + network)
         subprocess.call(["netctl", "restart", network])
 
+
 class InterfaceCtl(object):
     # Control the network interface, a.k.a wlan0 or eth0
     # etc...
@@ -485,6 +529,7 @@ class InterfaceCtl(object):
         print("iw:: scan: " + interface)
         subprocess.call(["iw", "dev", interface, "scan"])
 
+
 def CreateConfig(name, interface, security, key, ip='dhcp'):
     print("Creating Profile! Don't interrupt!\n")
     filename = "netgui_" + name
@@ -502,6 +547,7 @@ def CreateConfig(name, interface, security, key, ip='dhcp'):
     f.close()
     print("Alright, I have finished making the profile!")
 
+
 def IsConnected():
     # If we are connected to a network, it lists it. Otherwise, it returns nothing (or an empty byte).
     check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
@@ -510,6 +556,7 @@ def IsConnected():
     else:
         return True
 
+
 def CheckOutput(self, command):
     # Run a command, return what it's output was, and convert it from bytes to unicode
     p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
@@ -517,12 +564,14 @@ def CheckOutput(self, command):
     output = output.decode("utf-8")
     return output
 
+
 def CheckGrep(self, grepCmd):
     # Run a grep command, decode it from bytes to unicode, strip it of spaces,
     # and return it's output.
     p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
     output = ((p.communicate()[0]).decode("utf-8")).strip()
     return output
+
 
 def GetInterface():
     if os.path.isfile(intFile) != True:
