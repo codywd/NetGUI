@@ -183,7 +183,7 @@ class netgui(Gtk.Window):
         "onConnect": self.profileExists,
         "onDConnect": self.dConnectClicked,
         "onPrefClicked": self.prefClicked,
-        "onHelpClicked": self.get_network_pw,
+        "onHelpClicked": self.helpClicked,
         "onIssueReport": self.reportIssue
         }
         # Connect all the above handlers to actually call the functions.
@@ -400,7 +400,6 @@ class netgui(Gtk.Window):
                 else:
                     networkSecurity = self.getSecurity(select)
                     key = self.get_network_pw()
-                    print("key = " + key)
                     CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                     try:
                         InterfaceCtl.down(self, netinterface)
@@ -434,7 +433,6 @@ class netgui(Gtk.Window):
         entry = self.builder.get_object("userEntry")
         if ret == 1:
             password = entry.get_text()
-            print(password)
             return password
 
 
@@ -505,8 +503,7 @@ class netgui(Gtk.Window):
     def helpClicked(self, menuItem):
         # For some reason, anything besides subprocess.Popen
         # causes an error on exiting out of yelp...
-        key = GetInputDialog(None)
-        print("key = " + key)
+        subprocess.Popen("yelp")
 
     def reportIssue(self, menuItem):
         # Why would I need a local way of reporting issues when I can use github? Exactly.
