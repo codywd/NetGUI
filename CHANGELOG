@@ -1,3 +1,9 @@
+0.7.1
+1. Change to NoWifiMode through Menu (called Switch to Profile View)
+2. Changed backend to internal routines of WPA. Killed two issues in one stone.
+3. No longer shows blank networks.
+4. If profile already exists for network, now it will correctly connect to it.
+
 0.7
 1. Fixed issue #15: "Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory
 2. Fixed issue where wpa_cli ignored the NetGUI selected interface, even if set through preferences

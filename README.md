@@ -14,11 +14,14 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 ## Dependencies
 1. Python3
 2. python-gobject
-4. netctl
-5. notification-daemon
+3. netctl
+4. notification-daemon
 
 ## Known Issues
-1. ctrl_iface exists and seems to be in use - cannot override it - This issue stems from an error between wpa_cli and wpa_supplicant. To fix it, I need to find a workaround that I can code in. I am currently looking into a way to incorporate ```wpa_cli terminate``` which should (theoretically) destroy the currently running wpa_supplicant process, and allow a new one to be instantiated, thereby fixing this issue
+1. None
+
+## Known Issues
+1. Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory (https://github.com/codywd/NetGUI/issues/15). This issue is the #1 issue on our list. This issue stems from a bug upstream in the wpa package, and we can't fix it ourselves. To fix this issue, we have to rewrite the backend, which is what is being done now.
 
 ## General todo list / wish list
 
