@@ -1,14 +1,12 @@
-0.7.1
-1. Change to NoWifiMode through Menu (called Switch to Profile View)
-2. Changed backend to internal routines of WPA. Killed two issues in one stone.
-3. No longer shows blank networks.
-4. If profile already exists for network, now it will correctly connect to it.
-
 0.7
 1. Fixed issue #15: "Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory
 2. Fixed issue where wpa_cli ignored the NetGUI selected interface, even if set through preferences
 3. Changed dependency from notify-osd to notification-daemon. While I encounter issues if I DON'T use notify-osd, I will change it because it is a popular request.
 4. If a profile already exists, use it, and don't make a new one.
+5. Change to NoWifiMode through Menu (called Switch to Profile View)
+6. Changed backend to internal routines of WPA. Killed two issues in one stone.
+7. No longer shows blank networks.
+8. If profile already exists for network, now it will correctly connect to it.
 
 Known issues for 0.7:
 1. Preferences dialog does not work (except for preferred interface)
