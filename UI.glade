@@ -579,6 +579,10 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
         </child>
       </object>
     </child>
+    <action-widgets>
+      <action-widget response="-1">pwdCancelBtn</action-widget>
+      <action-widget response="1">pwdOkBtn</action-widget>
+    </action-widgets>
   </object>
   <object class="GtkDialog" id="prefDialog">
     <property name="can_focus">False</property>

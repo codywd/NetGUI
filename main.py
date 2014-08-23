@@ -31,8 +31,6 @@ prefFile = statusDir + "preferences.cfg"
 pidNumber = os.getpid()
 argNoWifi = 0
 
-networkPass = ""
-
 # Allows for command line arguments. Currently only a "Help" argument, but more to come.
 # TODO import ext library to handle this for us
 for arg in sys.argv:
@@ -72,6 +70,45 @@ except IOError:
 fp.write(str(pidNumber)+"\n")
 fp.flush()
 
+class GetInputDialog(Gtk.Dialog):
+    def __init__(self, parent, title):
+        Gtk.Dialog._init(self, title, parent)
+        self.response = "Cancel"
+        self.setupHeader()
+        self.setupUI()
+
+    def setupUI(self):
+
+        wdg = self.get_content_area() #explained bellow
+
+        self.txtSource = Gtk.Entry() #create a text entry
+        wdg.add(self.txtSource)
+        self.show_all() #show the dialog and all children
+
+    def setupHeader(self, title="Get User Input"):
+        hb = Gtk.HeaderBar()
+        hb.props.show_close_button = True
+        hb.props.title = title
+        self.set_titlebar(hb)
+
+        btnOk = Gtk.Button("OK")
+        btnOk.connect("clicked", self.btnOkClicked)
+        hb.pack_start(btnOk)
+
+        btnCancel = Gtk.Button("Cancel")
+        btnCancel.connect("clicked", self.btnCancelClicked)
+        hb.pack_start(btnCancel)
+
+    def btnOkClicked(self, e):
+        self.response = "Ok" #set the response var
+        dst = self.txtSource #get the entry with the url
+        txt = dst.get_text()
+        return 1
+
+    def btnCancelClicked(self, e):
+        self.response = "Cancel"
+        return -1
+
 # The main class of netgui. Nifty name, eh?
 class netgui(Gtk.Window):
     # AFAIK, I need __init__ to call InitUI right off the bat. I may be wrong, but it works.
@@ -109,18 +146,26 @@ class netgui(Gtk.Window):
         # Actually append the column to the treeview.
         SSIDCellRenderer = Gtk.CellRendererText()
         SSIDColumn = Gtk.TreeViewColumn("SSID", SSIDCellRenderer, text=0)
+        SSIDColumn.set_resizable(True)
+        SSIDColumn.set_expand(True)
         self.APList.append_column(SSIDColumn)
 
         connectQualityCellRenderer = Gtk.CellRendererText()
         connectQualityColumn = Gtk.TreeViewColumn("Connection Quality", connectQualityCellRenderer, text=1)
+        connectQualityColumn.set_resizable(True)
+        connectQualityColumn.set_expand(True)
         self.APList.append_column(connectQualityColumn)
 
         securityTypeCellRenderer = Gtk.CellRendererText()
         securityTypeColumn = Gtk.TreeViewColumn("Security Type", securityTypeCellRenderer, text=2)
+        securityTypeColumn.set_resizable(True)
+        securityTypeColumn.set_expand(True)
         self.APList.append_column(securityTypeColumn)
 
         connectedCellRenderer = Gtk.CellRendererText()
         connectedColumn = Gtk.TreeViewColumn("Connected?", connectedCellRenderer, text=3)
+        connectedColumn.set_resizable(True)
+        connectedColumn.set_expand(True)
         self.APList.append_column(connectedColumn)
 
         # Set TreeView as Reorderable
@@ -170,7 +215,7 @@ class netgui(Gtk.Window):
             self.NoWifiMode = 1
             ScanButton.props.sensitive = False
         else:
-            self.startScan(None)
+            #self.startScan(None)
             self.NoWifiMode = 0
 
         # Start initial scan
@@ -353,8 +398,7 @@ class netgui(Gtk.Window):
                     n.show()
                 else:
                     networkSecurity = self.getSecurity(select)
-                    self.get_network_pw()
-                    key = networkPass
+                    key = GetInputDialog(None)
                     print("key = " + key)
                     CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                     try:
@@ -383,17 +427,14 @@ class netgui(Gtk.Window):
                     Notify.uninit()
             self.startScan(self)
 
-    def get_network_pw(self):
-        def okClicked(self):
-            print(pwd.get_text())
-            return pwd.get_text()
-            pwDialog.destroy()
-            return pwd.get_text()
-
-        def cancelClicked(self):
-            print("nope!")
-            pwDialog.hide()
-            return None
+    def get_network_pw(self, e):
+        '''d = GetInputDialog(None, "Enter Password")
+        dialog = d.run()
+        if dialog is 1:
+            print("OK")
+        else:
+            print("Nope!")
+        d.hide()'''
 
         #Getting the about dialog from UI.glade
         pwDialog = self.builder.get_object("passwordDialog")
@@ -401,9 +442,21 @@ class netgui(Gtk.Window):
         cancelBtn = self.builder.get_object("pwdCancelBtn")
         pwd = self.builder.get_object("userEntry")
         # Opening the about dialog.
-        okBtn.connect("clicked", okClicked)
-        cancelBtn.connect("clicked", cancelClicked)
-        pwDialog.run()
+        while True:
+            ret = pwDialog.run()
+            if ret == -1:  # Cancel
+                break
+            else:
+                try:
+                    entry = pwd.get_text()
+                    return entry
+                    print(entry)
+                    break
+                except:
+                    print("Oh No!")
+
+        pwDialog.hide()
+
 
     def getSSID(self, selection):
         model, treeiter = selection.get_selected()
@@ -472,7 +525,8 @@ class netgui(Gtk.Window):
     def helpClicked(self, menuItem):
         # For some reason, anything besides subprocess.Popen
         # causes an error on exiting out of yelp...
-        subprocess.Popen("yelp")
+        key = GetInputDialog(None)
+        print("key = " + key)
 
     def reportIssue(self, menuItem):
         # Why would I need a local way of reporting issues when I can use github? Exactly.
