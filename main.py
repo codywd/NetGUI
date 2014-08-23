@@ -127,6 +127,7 @@ class netgui(Gtk.Window):
         self.scanning = False
         self.APindex = 0
         self.p = None
+        self.dialog = self.builder.get_object('passwordDialog')
 
         # Grab the "window1" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
@@ -215,7 +216,7 @@ class netgui(Gtk.Window):
             self.NoWifiMode = 1
             ScanButton.props.sensitive = False
         else:
-            #self.startScan(None)
+            self.startScan(None)
             self.NoWifiMode = 0
 
         # Start initial scan
@@ -398,7 +399,7 @@ class netgui(Gtk.Window):
                     n.show()
                 else:
                     networkSecurity = self.getSecurity(select)
-                    key = GetInputDialog(None)
+                    key = self.get_network_pw()
                     print("key = " + key)
                     CreateConfig(networkSSID, self.interfaceName, networkSecurity, key)
                     try:
@@ -427,35 +428,14 @@ class netgui(Gtk.Window):
                     Notify.uninit()
             self.startScan(self)
 
-    def get_network_pw(self, e):
-        '''d = GetInputDialog(None, "Enter Password")
-        dialog = d.run()
-        if dialog is 1:
-            print("OK")
-        else:
-            print("Nope!")
-        d.hide()'''
-
-        #Getting the about dialog from UI.glade
-        pwDialog = self.builder.get_object("passwordDialog")
-        okBtn = self.builder.get_object("pwdOkBtn")
-        cancelBtn = self.builder.get_object("pwdCancelBtn")
-        pwd = self.builder.get_object("userEntry")
-        # Opening the about dialog.
-        while True:
-            ret = pwDialog.run()
-            if ret == -1:  # Cancel
-                break
-            else:
-                try:
-                    entry = pwd.get_text()
-                    return entry
-                    print(entry)
-                    break
-                except:
-                    print("Oh No!")
-
-        pwDialog.hide()
+    def get_network_pw(self):
+        ret = self.dialog.run()
+        self.dialog.hide()
+        entry = self.builder.get_object("userEntry")
+        if ret == 1:
+            password = entry.get_text()
+            print(password)
+            return password
 
 
     def getSSID(self, selection):

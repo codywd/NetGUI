@@ -177,7 +177,9 @@ class NetGUI(Gtk.Window):
 
         # Start initial scan
         window.show_all()
-        GetInputDialog(None)
+
+    def startScan(self, e):
+        ScanRoutines.scan(None)
 
 
 class NetCTL(object):
@@ -236,10 +238,96 @@ class ScanRoutines(object):
         super(ScanRoutines, self).__init__()
 
     def scan(self):
-        pass
+        if os.path.exists(scan_file):
+            os.remove(scan_fileile)
+        if os.path.exists(status_dir + "final_results.log"):
+            os.remove(status_dir + "final_results.log")
+        self.p = multiprocessing.Process(target=self.run_scan)
+        self.p.start()
+        self.p.join()
+        self.checkScan()
 
+    def run_scan(self):
+        print("Please wait! Now Scanning.")
+        # Huge thanks to joukewitteveen on GitHub for the following command!! Slightly modified from his comment
+
+        subprocess.call('bash -c "source /usr/lib/network/globals; source /usr/lib/network/wpa; wpa_supplicant_scan ' + self.interfaceName + ' 3,4,5" >> ' + scan_file, shell=True)
+        print("Done Scanning!")
+    ## TODO: Rewrite for new GUI/Scan split functions
     def check_scan(self):
-        pass
+        sf = open(scanFile, 'r')
+        realdir = sf.readline()
+        realdir = realdir.strip()
+        sf.close()
+        print(realdir)
+        shutil.move(realdir, statusDir + "final_results.log")
+
+        with open(statusDir + "final_results.log") as tsv:
+            self.APStore.clear()
+
+            r = csv.reader(tsv, dialect='excel-tab')
+            aps = {}
+            i = 0
+            for row in r:
+                network = row[2]
+                print(network)
+                if network == "":
+                    pass
+                elif "\x00" in network:
+                    pass
+                else:
+                    aps["row" + str(i)] = self.APStore.append([network, "", "", ""])
+
+                quality = row[0]
+                if int(quality) <= -100:
+                    percent = "0%"
+                elif int(quality) >= -50:
+                    percent = "100%"
+                else:
+                    fquality = (2 * (int(quality) + 100))
+                    percent = str(fquality) + "%"
+                if network == "":
+                    pass
+                else:
+                    self.APStore.set(aps["row" + str(i)], 1, percent)
+
+                security = row[1]
+                if "WPA" in security:
+                    encryption = "WPA"
+                elif "OPENSSID" in security:
+                    encryption = "Open"
+                elif "WPS" in security:
+                    encryption = "WPS"
+                elif "WEP" in security:
+                    encryption = "WEP"
+                else:
+                    encryption = "Open"
+                if network == "":
+                    pass
+                else:
+                    self.APStore.set(aps["row" + str(i)], 2, encryption)
+
+                if IsConnected() is False:
+                    if network == "":
+                        pass
+                    else:
+                        if network == "":
+                            pass
+                        else:
+                            self.APStore.set(aps["row" + str(i)], 3, "No")
+                else:
+                    connectedNetwork = CheckOutput(self, "netctl list | sed -n 's/^\* //p'").strip()
+                    if network in connectedNetwork:
+                        if network == "":
+                            pass
+                        else:
+                            self.APStore.set(aps["row" + str(i)], 3, "Yes")
+                    else:
+                        if network == "":
+                            pass
+                        else:
+                            self.APStore.set(aps["row" + str(i)], 3, "No")
+                i=i+1
 
 
 def create_config(name, interface, security, key, ip='dhcp'):
