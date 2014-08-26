@@ -9,7 +9,7 @@
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">NetGUI</property>
-    <property name="version">0.7</property>
+    <property name="version">0.8</property>
     <property name="copyright" translatable="yes">Copyright (c) 2013. Cody Dostal	</property>
     <property name="comments" translatable="yes">NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.</property>
     <property name="website">https://github.com/codywd/NetGUI</property>
@@ -188,7 +188,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">NetGUI</property>
     <property name="window_position">center</property>
-    <signal name="delete-event" handler="onExit" swapped="no"/>
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>
@@ -258,10 +257,28 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                         <signal name="activate" handler="onPrefClicked" swapped="no"/>
                       </object>
                     </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="toolsMenu">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Tools</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="menu5">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkSeparatorMenuItem" id="separator">
+                      <object class="GtkMenuItem" id="dConnectAll">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Disconnect from all connected networks.</property>
+                        <property name="label" translatable="yes">Disconnect All</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="onDAll" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -456,9 +473,6 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <object class="GtkTreeView" id="treeview1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="vscroll_policy">natural</property>
-                <property name="enable_grid_lines">horizontal</property>
-                <property name="enable_tree_lines">True</property>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="treeview-selection1"/>
                 </child>
@@ -488,6 +502,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
     </child>
   </object>
   <object class="GtkListStore" id="liststore1"/>
+  <object class="GtkListStore" id="liststore2"/>
   <object class="GtkDialog" id="passwordDialog">
     <property name="can_focus">False</property>
     <property name="type">popup</property>

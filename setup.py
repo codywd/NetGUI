@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='netgui',
-      version='0.7',
+      version='0.8',
     description = "More advanced GUI for NetCTL. Replaces WiFiz.",
     author = "Cody Dostal <dostalcody@gmail.com>, Gregory Mullen <greg@grayhatter.com>",
     url = "https://github.com/codywd/netgui",

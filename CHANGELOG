@@ -1,3 +1,11 @@
+0.8
+1. Fixed "TypeError: onBtnExit() takes 2 positional arguments but 3 were given" when clicking "X" button.
+2. Broke scanning routines out of GUI loop.
+3. When in Profile View/NoWifiMode, now it will say whether or not
+   you are connected.
+4. Rewrote the --help/-h argument.
+5. Added various tools. (NetCTL stop-all, ProfileView)
+
 0.7
 1. Fixed issue #15: "Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory
 2. Fixed issue where wpa_cli ignored the NetGUI selected interface, even if set through preferences
