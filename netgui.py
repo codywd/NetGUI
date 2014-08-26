@@ -29,10 +29,6 @@ import subprocess
 import sys
 import webbrowser
 
-# Import Third Party Libraries
-from gi.repository import Gtk, Gdk, GObject, GLib
-from gi.repository import Notify
-
 # Setting base app information, such as version, and configuration directories/files.
 prog_ver = "0.8"
 profile_dir = "/etc/netctl/"
@@ -46,6 +42,11 @@ img_loc = "/usr/share/netgui/imgs"
 pref_file = status_dir + "preferences.cfg"
 pid_number = os.getpid()
 arg_no_wifi = 0
+
+
+# Import Third Party Libraries
+from gi.repository import Gtk, Gdk, GObject, GLib
+from gi.repository import Notify
 
 # Checking for arguments in command line. We will never have a command line version of netgui (it's called netctl!)
 for arg in sys.argv:
@@ -451,30 +452,73 @@ class NetGUI(Gtk.Window):
         # titlebar box. I don't know how to fix either besides this.
         def OnLoad(self):
             f = open(status_dir + "interface.cfg", 'r+')
+            d = open(pref_file, 'r+')
             interfaceEntry.set_text(str(f.read()))
+            for line in d:
+                if "Default Profile:" in line:
+                    default_profile.set_text(str(line)[17:])
+                if "Unsecure Status:" in line:
+                    if "No" in line:
+                        unsecure_switch.set_active(False)
+                    elif "Yes" in line:
+                        unsecure_switch.set_active(True)
+                if "Autoconnect Status:" in line:
+                    if "No" in line:
+                        autoconnect_switch.set_active(False)
+                    elif "Yes" in line:
+                        autoconnect_switch.set_active(True)
+                if "NoteType:" in line:
+                    if "Center" in line:
+                        notification_type.set_active_id("1")
+                    elif "Message" in line:
+                        notification_type.set_active_id("2")
+                    elif "Terminal" in line:
+                        notification_type.set_active_id("3")
             f.close()
+            d.close()
 
         def cancelClicked(self):
-            print("Cancel Clicked.")
             preferencesDialog.hide()
 
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
         # and because it makes the program flow more, IMHO
         def saveClicked(self):
             f = open(status_dir + "interface.cfg", 'r+')
+            d = open(pref_file, 'r+')
             cur_int = f.read()
             f.close()
             new_int = interfaceEntry.get_text()
             if new_int != cur_int:
                 for line in fileinput.input(status_dir + "interface.cfg", inplace=True):
                     print(new_int)
-            preferencesDialog.hide()
 
-        # Get the three things we need from UI.glade
-        preferencesDialog = self.builder.get_object("prefDialog")
-        saveButton = self.builder.get_object("saveButton")
-        cancelButton = self.builder.get_object("cancelButton")
-        interfaceEntry = self.builder.get_object("wiInterface")
+            if default_profile != "" or None:
+                d.write("Default Profile: " + default_profile.get_text() + "\n")
+
+            if unsecure_switch.get_active() is True:
+                d.write("Unsecure Status: Yes\n")
+            else:
+                d.write("Unsecure Status: No\n")
+
+            if autoconnect_switch.get_active() is True:
+                d.write("Autoconnect Status: Yes\n")
+            else:
+                d.write("Autoconnect Status: No\n")
+
+            nt = notification_type.get_active_text()
+            d.write("NoteType: " + nt + "\n")
+            d.close()
+            preferencesDialog.hide()
+        # Get everything we need from UI.glade
+        go = self.builder.get_object
+        preferencesDialog = go("prefDialog")
+        saveButton = go("saveButton")
+        cancelButton = go("cancelButton")
+        interfaceEntry = go("wiInterface")
+        default_profile = go("defaultProfilePath")
+        unsecure_switch = go("unsecureSwitch")
+        autoconnect_switch = go("autoconnectSwitch")
+        notification_type = go("notification_type")
 
         # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
