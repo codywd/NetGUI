@@ -1,14 +1,15 @@
 '''
 Basic TODO:
 1.  Write help file (html/css/js)
-2.  Finish preferences dialog
+2.  Finish preferences dialog (DONE!)
+2a. Implement preference choices throughout the program.
 3.  Make notifications optional
 4.  Write webbrowser.open wrapper script, where gid and uid are
     gid are set to the user, so it correctly runs, and doesn't
     error because it is set as root.
 5.  Add tray icon
 6.  Auto roaming capabilities (Preferences default profile, maybe
-    set for multiple default profiles. NetCTL enable
+    set for multiple default profiles? NetCTL enable)
 7.  Basic network diagnostics?
 8.  Incorporate surfatwork's NetCTL icon/applet for Gnome Shell
     (All actual coding is done for his, just incorporate it into
@@ -194,6 +195,7 @@ class NetGUI(Gtk.Window):
             self.NoWifiMode = 0
 
         # Start initial scan
+        Notify.init("NetGUI")
         window.show_all()
 
     def no_wifi_scan(self):
@@ -366,7 +368,7 @@ class NetGUI(Gtk.Window):
                 profile = "netgui_" + networkSSID
                 print("profile = " + profile)
                 netinterface = self.interfaceName
-                if os.path.isfile(conf_dir + profile):
+                if os.path.isfile(profile_dir + profile):
                     InterfaceControl.down(self, netinterface)
                     NetCTL.stopall(self)
                     NetCTL.start(profile)
@@ -434,9 +436,6 @@ class NetGUI(Gtk.Window):
         n.show()
 
     def disconnect_all(self, e):
-        select = self.APList.get_selection()
-        networkSSID = self.getSSID(select)
-        profile = "netgui_" + networkSSID
         interfaceName = get_interface()
         NetCTL.stopall(None)
         InterfaceControl.down(self, interfaceName)
@@ -444,7 +443,6 @@ class NetGUI(Gtk.Window):
         n = Notify.Notification.new("Disconnected from all networks!", "You are now disconnected from all networks.", "dialog-information")
         n.show()
 
-    #TODO: Make rest of prefDialog work!
     def prefClicked(self, e):
         # Setting up the cancel function here fixes a weird bug where, if outside of the prefClicked function
         # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
@@ -657,16 +655,6 @@ def CheckOutput(self, command):
     output = p.communicate()[0]
     output = output.decode("utf-8")
     return output
-
-''' Remove?
-def CheckGrep(self, grepCmd):
-    # Run a grep command, decode it from bytes to unicode, strip it of spaces,
-    # and return it's output.
-    p = subprocess.Popen(grepCmd, stdout=subprocess.PIPE, shell=True)
-    output = ((p.communicate()[0]).decode("utf-8")).strip()
-    return output
-'''
-
 
 def get_interface():
     if os.path.isfile(interface_conf_file) != True:
