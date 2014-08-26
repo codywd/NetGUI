@@ -480,6 +480,21 @@ class NetGUI(Gtk.Window):
         def cancelClicked(self):
             preferencesDialog.hide()
 
+        def chooseProfile(self):
+            dialog = Gtk.FileChooserDialog("Choose your default profile.", None,
+                Gtk.FileChooserAction.OPEN,
+                (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+            dialog.set_current_folder("/etc/netctl")
+
+            response = dialog.run()
+            if response == Gtk.ResponseType.OK:
+                default_profile.set_text(dialog.get_filename())
+            elif response == Gtk.ResponseType.CANCEL:
+                print("Cancel clicked")
+
+            dialog.destroy()
+
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
         # and because it makes the program flow more, IMHO
         def saveClicked(self):
@@ -519,12 +534,13 @@ class NetGUI(Gtk.Window):
         unsecure_switch = go("unsecureSwitch")
         autoconnect_switch = go("autoconnectSwitch")
         notification_type = go("notification_type")
+        filechooser = go("chooseDefaultProfile")
 
         # Connecting the "clicked" signals of each button to the relevant function.
         saveButton.connect("clicked", saveClicked)
         cancelButton.connect("clicked", cancelClicked)
         preferencesDialog.connect("show", OnLoad)
-
+        filechooser.connect("clicked", chooseProfile)
         # Opening the Preferences Dialog.
         preferencesDialog.run()
 

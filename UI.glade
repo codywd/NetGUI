@@ -659,6 +659,8 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -676,6 +678,8 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <object class="GtkSwitch" id="unsecureSwitch">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -686,6 +690,8 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <object class="GtkSwitch" id="autoconnectSwitch">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -696,7 +702,7 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
               <object class="GtkComboBoxText" id="notification_type">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="active_id">2</property>
+                <property name="active_id">1</property>
                 <items>
                   <item id="1" translatable="yes">Notification Center</item>
                   <item id="2" translatable="yes">GTK MessageBox</item>
