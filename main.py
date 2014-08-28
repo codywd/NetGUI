@@ -16,11 +16,7 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
 # Setting base app information, such as version, and configuration directories/files.
-<<<<<<< HEAD
-progVer = "0.8"
-=======
 progVer = "0.7.1"
->>>>>>> 0.7.1
 conf_dir = "/etc/netctl/"
 statusDir = "/var/lib/netgui/"
 progLoc = "/usr/share/netgui/"
@@ -582,7 +578,7 @@ def GetInterface():
         if interfaceName == "":
             intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
             interfaceName = intNameCheck[166:172]     
-        if interfaceName == "":
+        if interfacName == "":
             interfaceName = netgui.get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
         f = open(intFile, 'w')
         f.write(interfaceName)
