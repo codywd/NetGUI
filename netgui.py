@@ -113,7 +113,7 @@ class NetGUI(Gtk.Window):
 
         # Get the OnScan button in case we are going to run in NoWifiMode
         ScanButton = self.builder.get_object("scanAPsTool")
-
+        self.dialog = self.builder.get_object("passwordDialog")
         # Setup the main area of netgui: The network list.
         self.APList = self.builder.get_object("treeview1")
         self.APStore = Gtk.ListStore(str, str, str, str)
@@ -155,7 +155,7 @@ class NetGUI(Gtk.Window):
             "onSwitch": self.onSwitch,
             "onExit": self.onBtnExit,
             "onAboutClicked": self.aboutClicked,
-            "onScan": self.startScan,
+            "onScan": self.check_scan,
             "onConnect": self.profileExists,
             "onDConnect": self.dConnectClicked,
             "onPrefClicked": self.prefClicked,
@@ -223,13 +223,13 @@ class NetGUI(Gtk.Window):
         ScanRoutines.scan(None)
         self.check_scan()
 
-    def check_scan(self):
-        sf = open(scan_file, 'r')
+    def check_scan(self, e):
+        '''sf = open(scan_file, 'r')
         realdir = sf.readline()
         realdir = realdir.strip()
         sf.close()
         print(realdir)
-        shutil.move(realdir, status_dir + "final_results.log")
+        shutil.move(realdir, status_dir + "final_results.log")'''
 
         with open(status_dir + "final_results.log") as tsv:
             self.APStore.clear()
@@ -239,14 +239,13 @@ class NetGUI(Gtk.Window):
             i = 0
             for row in r:
                 network = row[2]
-                print(network)
-                if network == "":
-                    pass
-                elif "\x00" in network:
-                    pass
+                print(ascii(network))
+                if r"\x00" in network:
+                     continue
+                elif network is "":
+                    continue
                 else:
                     aps["row" + str(i)] = self.APStore.append([network, "", "", ""])
-
                 quality = row[0]
                 if int(quality) <= -100:
                     percent = "0%"
@@ -376,7 +375,10 @@ class NetGUI(Gtk.Window):
                     n.show()
                 else:
                     networkSecurity = self.getSecurity(select)
-                    key = self.get_network_pw()
+                    if networkSecurity == "Open":
+                        key = "none"
+                    else:
+                        key = self.get_network_pw()
                     create_config(networkSSID, self.interfaceName, networkSecurity, key)
                     try:
                         InterfaceControl.down(self, netinterface)

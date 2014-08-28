@@ -5,6 +5,8 @@
    you are connected.
 4. Rewrote the --help/-h argument.
 5. Added various tools. (NetCTL stop-all, ProfileView)
+6. Now correctly skips the network that sometimes shows up labeled
+   \x00\x00\x00\x00\x00...
 
 0.7
 1. Fixed issue #15: "Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory
