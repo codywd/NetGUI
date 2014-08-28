@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # NetGUI v0.8
+=======
+# NetGUI v0.7.1
+>>>>>>> 0.7.1
 
 NetGUI is an official fork of what was originally known as WiFiz. NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.
 
@@ -20,13 +24,10 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 ## Known Issues
 1. None
 
-## Known Issues
-1. Failed to connect to non-global ctrl_ifname: (null) error: No such file or directory (https://github.com/codywd/NetGUI/issues/15). This issue is the #1 issue on our list. This issue stems from a bug upstream in the wpa package, and we can't fix it ourselves. To fix this issue, we have to rewrite the backend, which is what is being done now.
-
 ## General todo list / wish list
 
 - [ ] add tray icon
-- [ ] mv all actual work out of the gui
+- [x] mv all actual work out of the gui
 - [ ] interface with auto roaming
 - [ ] mild network diagnostics
 - [ ] build python module for netctl for outside apps

@@ -13,8 +13,9 @@ Basic TODO:
 7.  Basic network diagnostics?
 8.  Incorporate surfatwork's NetCTL icon/applet for Gnome Shell
     (All actual coding is done for his, just incorporate it into
-    ours somehow).
-    (https://bbs.archlinux.org/viewtopic.php?id=182826)
+    ours somehow). (https://bbs.archlinux.org/viewtopic.php?id=182826)
+    (Work in progress! Watch https://github.com/codywd/netctlgnome to watch the progress.)
+
 '''
 
 #! /usr/bin/python3
