@@ -246,7 +246,7 @@ class netgui(Gtk.Window):
                 print(network)
                 if network == "":
                     pass
-                elif "\x00" in network:
+                elif r"\x00" in network:
                     pass
                 else:
                     aps["row" + str(i)] = self.APStore.append([network, "", "", ""])
