@@ -16,7 +16,7 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.7"
+progVer = "0.7.1"
 conf_dir = "/etc/netctl/"
 statusDir = "/var/lib/netgui/"
 progLoc = "/usr/share/netgui/"
@@ -286,7 +286,7 @@ class netgui(Gtk.Window):
                 print(network)
                 if network == "":
                     pass
-                elif "\x00" in network:
+                elif r"\x00" in network:
                     pass
                 else:
                     aps["row" + str(i)] = self.APStore.append([network, "", "", ""])
