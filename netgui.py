@@ -45,10 +45,15 @@ pref_file = status_dir + "preferences.cfg"
 pid_number = os.getpid()
 arg_no_wifi = 0
 
+file_to_pass = ""
+
 
 # Import Third Party Libraries
-from gi.repository import Gtk, Gdk, GObject, GLib
+from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
 from gi.repository import Notify
+
+# Import Project Libraries
+import profileEditor
 
 # Checking for arguments in command line. We will never have a command line version of netgui (it's called netctl!)
 for arg in sys.argv:
@@ -106,6 +111,7 @@ class NetGUI(Gtk.Window):
         is_connected()
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
+        GObject.type_register(GtkSource.View)
         self.builder.add_from_file(program_loc + "UI.glade")
 
         # Grab the "window1" attribute from UI.glade, and set it to show everything.
@@ -156,13 +162,14 @@ class NetGUI(Gtk.Window):
             "onSwitch": self.onSwitch,
             "onExit": self.onBtnExit,
             "onAboutClicked": self.aboutClicked,
-            "onScan": self.check_scan,
+            "onScan": self.startScan,
             "onConnect": self.profileExists,
             "onDConnect": self.dConnectClicked,
             "onPrefClicked": self.prefClicked,
             "onHelpClicked": self.onHelpClicked,
             "onIssueReport": self.reportIssue,
-            "onDAll": self.disconnect_all
+            "onDAll": self.disconnect_all,
+            "onEditorActivate": self.open_editor
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
@@ -199,6 +206,19 @@ class NetGUI(Gtk.Window):
         Notify.init("NetGUI")
         window.show_all()
 
+    def open_editor(self, e):
+        select = self.APList.get_selection()
+        if select == "" or None:
+            profileEditor.NetGUIProfileEditor()
+        else:
+            networkSSID = self.getSSID(select)
+            profile = "/etc/netctl/netgui_" + networkSSID
+            d = open(status_dir + "profile_to_edit", 'w')
+            d.write(profile)
+            d.close()
+            profileEditor.NetGUIProfileEditor()
+
+
     def no_wifi_scan(self):
         aps = {}
         profiles = os.listdir("/etc/netctl/")
@@ -224,13 +244,13 @@ class NetGUI(Gtk.Window):
         ScanRoutines.scan(None)
         self.check_scan()
 
-    def check_scan(self, e):
-        '''sf = open(scan_file, 'r')
+    def check_scan(self):
+        sf = open(scan_file, 'r')
         realdir = sf.readline()
         realdir = realdir.strip()
         sf.close()
         print(realdir)
-        shutil.move(realdir, status_dir + "final_results.log")'''
+        shutil.move(realdir, status_dir + "final_results.log")
 
         with open(status_dir + "final_results.log") as tsv:
             self.APStore.clear()
@@ -322,6 +342,7 @@ class NetGUI(Gtk.Window):
 
     def profileExists(self, e):
         skipNoProfConn = 0
+        foundProf = 0
         select = self.APList.get_selection() # Get selected network
         SSID = self.getSSID(select) # Get SSID of selected network.
         for profile in os.listdir("/etc/netctl/"):
@@ -332,8 +353,12 @@ class NetGUI(Gtk.Window):
                         if "ESSID" in line.strip():
                             ESSIDName = line[6:]
                             if str(SSID).lower() in ESSIDName.lower():
-                                self.connectClicked(1, current_profile_name)
                                 skipNoProfConn = 1
+                                if foundProf is 1:
+                                    break
+                                else:
+                                    self.connectClicked(1, current_profile_name)
+                                    foundProf = 1
                             else:
                                 pass
                         else:

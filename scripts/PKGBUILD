@@ -2,13 +2,16 @@
 
 pkgname=netgui
 _gitname=NetGUI
-pkgver=0.7.1
+pkgver=0.8
 pkgrel=1
 pkgdesc="GUI for netctl, stable but beta. Replaces WiFiz."
 arch=('any')
 url="https://github.com/codywd/$_gitname"
 license=('MIT')
-depends=('python' 'python-gobject' 'netctl' 'notification-daemon')
+depends=('python' 'python-gobject' 'netctl')
+optdepends=(
+    'notification-daemon: Desktop Notifications'
+)
 makedepends=('git')
 provides=('netgui')
 conflicts=('netcfg', 'wicd')
