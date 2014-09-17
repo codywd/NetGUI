@@ -16,7 +16,7 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 from gi.repository import Notify
 
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.7.1"
+progVer = "0.7.2"
 conf_dir = "/etc/netctl/"
 statusDir = "/var/lib/netgui/"
 progLoc = "/usr/share/netgui/"
@@ -70,44 +70,6 @@ except IOError:
 fp.write(str(pidNumber)+"\n")
 fp.flush()
 
-class GetInputDialog(Gtk.Dialog):
-    def __init__(self, parent, title):
-        Gtk.Dialog._init(self, title, parent)
-        self.response = "Cancel"
-        self.setupHeader()
-        self.setupUI()
-
-    def setupUI(self):
-
-        wdg = self.get_content_area() #explained bellow
-
-        self.txtSource = Gtk.Entry() #create a text entry
-        wdg.add(self.txtSource)
-        self.show_all() #show the dialog and all children
-
-    def setupHeader(self, title="Get User Input"):
-        hb = Gtk.HeaderBar()
-        hb.props.show_close_button = True
-        hb.props.title = title
-        self.set_titlebar(hb)
-
-        btnOk = Gtk.Button("OK")
-        btnOk.connect("clicked", self.btnOkClicked)
-        hb.pack_start(btnOk)
-
-        btnCancel = Gtk.Button("Cancel")
-        btnCancel.connect("clicked", self.btnCancelClicked)
-        hb.pack_start(btnCancel)
-
-    def btnOkClicked(self, e):
-        self.response = "Ok" #set the response var
-        dst = self.txtSource #get the entry with the url
-        txt = dst.get_text()
-        return 1
-
-    def btnCancelClicked(self, e):
-        self.response = "Cancel"
-        return -1
 
 # The main class of netgui. Nifty name, eh?
 class netgui(Gtk.Window):
@@ -172,8 +134,6 @@ class netgui(Gtk.Window):
         # Set TreeView as Reorderable
         self.APList.set_reorderable(True)
 
-        # Setting the selection detection. Heh, that rhymes.
-
         # Set all the handlers I defined in glade to local functions.
         handlers = {
         "onSwitch": self.onSwitch,
@@ -188,7 +148,7 @@ class netgui(Gtk.Window):
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
-        
+
         # Populate profiles menu
         menu = self.builder.get_object("menubar1")
         profileMenu = self.builder.get_object("profilesMenu")
@@ -618,7 +578,7 @@ def GetInterface():
         if interfaceName == "":
             intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
             interfaceName = intNameCheck[166:172]     
-        if interfaceName == "":
+        if interfacName == "":
             interfaceName = netgui.get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
         f = open(intFile, 'w')
         f.write(interfaceName)
