@@ -17,14 +17,13 @@ setup(name='netgui',
         'UI.glade']),
     ('/usr/share/licenses/netgui',
         ['NetGUI.license']),
-    ('/usr/share/negui/imgs',
-        ['APScan.png',
-         'connect.png',
-         'exit.png',
-         'newprofile.png',
-         'aboutLogo.png',
-         'disconnect.png',
-         'logo.png',
-         'preferences.png'])
-
-])
+    ('/usr/share/netgui/imgs',
+        ['imgs/APScan.png',
+         'imgs/connect.png',
+         'imgs/exit.png',
+         'imgs/newprofile.png',
+         'imgs/aboutLogo.png',
+         'imgs/disconnect.png',
+         'imgs/logo.png',
+         'imgs/preferences.png'])]
+)
