@@ -83,6 +83,7 @@ class netgui(Gtk.Window):
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         self.builder = Gtk.Builder()
+        GObject.type_register(GtkSource.View)
         self.builder.add_from_file(progLoc + "UI.glade")
 
         # Init Vars
