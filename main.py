@@ -145,7 +145,9 @@ class netgui(Gtk.Window):
         "onDConnect": self.dConnectClicked,
         "onPrefClicked": self.prefClicked,
         "onHelpClicked": self.helpClicked,
-        "onIssueReport": self.reportIssue
+        "onIssueReport": self.reportIssue,
+        "onDAll": self.onDAll,
+        "onEditorActivate": self.OnEA,
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
@@ -182,6 +184,12 @@ class netgui(Gtk.Window):
 
         # Start initial scan
         window.show_all()
+
+    def OnEA(self, e):
+        pass
+
+    def onDAll(self, e):
+        pass
         
     def onSwitch(self, e):
         self.APStore.clear()
