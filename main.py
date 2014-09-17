@@ -12,7 +12,7 @@ import sys
 import webbrowser
 
 # Import Third Party Libraries
-from gi.repository import Gtk, Gdk, GObject, GLib, GtkSourceView
+from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
 from gi.repository import Notify
 
 # Setting base app information, such as version, and configuration directories/files.
