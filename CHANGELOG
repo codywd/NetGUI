@@ -13,6 +13,8 @@
 8. Beginnings of profile editor. Will hopefully be much more
    advanced, with auto-completion, syntax highlighting, and 
    attribute insertion in the future.
+0.7.3
+1. Fixed issue #37
    
 0.7.2
 1. Fixed issue with setup.py, where it installed images to incorrect directory.
