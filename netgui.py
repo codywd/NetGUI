@@ -689,7 +689,7 @@ def get_interface():
 
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if "wlp" or "wlan" in device:
+            if "wlp" in device or "wlan" in device:
                 interfaceName = device
             else:
                 pass
