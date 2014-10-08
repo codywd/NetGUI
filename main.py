@@ -580,14 +580,14 @@ def GetInterface():
         
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if "wlp" or "wlan" in device:
+            if "wlp" in device or "wlan" in device:
                 interfaceName = device
             else:
                 pass
         if interfaceName == "":
             intNameCheck = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
             interfaceName = intNameCheck[166:172]     
-        if interfacName == "":
+        if interfaceName == "":
             interfaceName = netgui.get_network_pw(self, "We could not automatically detect your wireless interface. Please type it here. Leave blank for NoWifiMode.", "Network Interface Required.")
         f = open(intFile, 'w')
         f.write(interfaceName)
