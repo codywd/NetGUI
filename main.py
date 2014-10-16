@@ -576,11 +576,12 @@ def CheckGrep(self, grepCmd):
 
 
 def GetInterface():
+    interfaceName = ""
     if os.path.isfile(intFile) != True:
         
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if "wlp" in device or "wlan" in device:
+            if "wl" in device:
                 interfaceName = device
             else:
                 pass
