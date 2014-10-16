@@ -435,7 +435,7 @@ class netgui(Gtk.Window):
         # and not destroy it, is it causes another bug where the dialog becomes a small little
         # titlebar box. I don't know how to fix either besides this.
         def OnLoad(self):
-            f = open("/usr/lib/netgui/interface.cfg", 'r')
+            f = open(intfile, 'r+')
             interfaceEntry.set_text(str(f.read()))
             f.close()
             
@@ -580,7 +580,7 @@ def GetInterface():
         
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if "wlp" in device or "wlan" in device:
+            if "wl" in deviec:
                 interfaceName = device
             else:
                 pass
