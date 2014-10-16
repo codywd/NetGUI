@@ -435,7 +435,7 @@ class netgui(Gtk.Window):
         # and not destroy it, is it causes another bug where the dialog becomes a small little
         # titlebar box. I don't know how to fix either besides this.
         def OnLoad(self):
-            f = open(intfile, 'r+')
+            f = open(intFile, 'r+')
             interfaceEntry.set_text(str(f.read()))
             f.close()
             
@@ -446,12 +446,12 @@ class netgui(Gtk.Window):
         # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
         # and because it makes the program flow more, IMHO
         def saveClicked(self):
-            f = open("/usr/lib/netgui/interface.cfg", 'r+')
+            f = open(intFile, 'r+')
             curInt = f.read()
             f.close()
             newInt = interfaceEntry.get_text()
             if newInt != curInt:
-                for line in fileinput.input("/usr/lib/netgui/interface.cfg", inplace=True):
+                for line in fileinput.input(intFile, inplace=True):
                     print(newInt)
             preferencesDialog.hide()
 
