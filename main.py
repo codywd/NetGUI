@@ -580,7 +580,7 @@ def GetInterface():
         
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if "wl" in deviec:
+            if "wl" in device:
                 interfaceName = device
             else:
                 pass
