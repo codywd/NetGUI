@@ -88,7 +88,7 @@ if euid != 0:
 # Let's also not allow any more than one instance of netgui.
 fp = open(pid_file, 'w')
 try:
-    fcntl.lockf(fp, fcntl.LOCK_EX|fcntl.LOCK_NB)
+    fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
 except IOError:
     print("We only allow one instance of netgui to be running at a time for precautionary reasons.")
     sys.exit(1)
@@ -685,11 +685,12 @@ def CheckOutput(self, command):
     return output
 
 def get_interface():
+    interfaceName = ""
     if os.path.isfile(interface_conf_file) != True:
 
         devices = os.listdir("/sys/class/net")
         for device in devices:
-            if "wlp" or "wlan" in device:
+            if "wl" in device:
                 interfaceName = device
             else:
                 pass

@@ -14,6 +14,13 @@
    advanced, with auto-completion, syntax highlighting, and 
    attribute insertion in the future.
    
+0.7.4
+1. Fixed misspelling. Device spelt as deviec
+2. Should now detect all wireless devices (it seems all wireless devices start with wl, instead of just wlp or wlan.)
+
+0.7.3
+1. Fixed issue #37
+   
 0.7.2
 1. Fixed issue with setup.py, where it installed images to incorrect directory.
 

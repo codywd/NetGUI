@@ -16,7 +16,7 @@ from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
 from gi.repository import Notify
 
 # Setting base app information, such as version, and configuration directories/files.
-progVer = "0.7.2"
+progVer = "0.7.4"
 conf_dir = "/etc/netctl/"
 statusDir = "/var/lib/netgui/"
 progLoc = "/usr/share/netgui/"
@@ -576,6 +576,7 @@ def CheckGrep(self, grepCmd):
 
 
 def GetInterface():
+    interfaceName = ""
     if os.path.isfile(intFile) != True:
         
         devices = os.listdir("/sys/class/net")
