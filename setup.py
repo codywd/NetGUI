@@ -26,7 +26,7 @@ setup(name='netgui',
          'imgs/disconnect.png',
          'imgs/logo.png',
          'imgs/preferences.png']),
-    ('~/.local/applications',
+    ('~/.local/share/applications',
         ['scripts/netgui.desktop'])
     ]
 )
