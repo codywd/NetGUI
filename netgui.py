@@ -104,6 +104,8 @@ class NetGUI(Gtk.Window):
         self.APindex = 0
         self.p = None
         self.builder = Gtk.Builder()
+        GObject.type_register(GtkSource.View)
+        self.builder.add_from_file(program_loc + "UI.glade")
         self.dialog = self.builder.get_object("passwordDialog")
         self.ap_list = self.builder.get_object("treeview1")
         self.ap_store = Gtk.ListStore(str, str, str, str)
@@ -115,8 +117,6 @@ class NetGUI(Gtk.Window):
         is_connected()
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
-        GObject.type_register(GtkSource.View)
-        self.builder.add_from_file(program_loc + "UI.glade")
 
         # Grab the "window1" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
@@ -211,11 +211,12 @@ class NetGUI(Gtk.Window):
         window.show_all()
 
     def open_editor(self, e):
+        open(status_dir + "profile_to_edit", 'w').close()
         select = self.ap_list.get_selection()
-        if select == "" or None:
+        network_ssid = self.get_ssid(select)
+        if network_ssid is None:
             profileEditor.NetGUIProfileEditor()
         else:
-            network_ssid = self.get_ssid(select)
             profile = "/etc/netctl/netgui_" + network_ssid
             d = open(status_dir + "profile_to_edit", 'w')
             d.write(profile)
@@ -452,7 +453,7 @@ class NetGUI(Gtk.Window):
             password = entry.get_text()
             return password
 
-    @staticmethod
+
     def get_ssid(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter is not None:

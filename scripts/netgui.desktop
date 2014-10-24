@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=NetGUI
+Comment=A Grapical Frontend for NetCTL
+Exec=su -c "netgui"
+Icon=/usr/share/netgui/imgs/logo.png
+Terminal=false

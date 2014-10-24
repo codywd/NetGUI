@@ -25,5 +25,8 @@ setup(name='netgui',
          'imgs/aboutLogo.png',
          'imgs/disconnect.png',
          'imgs/logo.png',
-         'imgs/preferences.png'])]
+         'imgs/preferences.png']),
+    ('~/.local/applications',
+        ['scripts/netgui.desktop'])
+    ]
 )

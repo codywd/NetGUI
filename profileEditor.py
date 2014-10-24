@@ -20,14 +20,13 @@ from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
 from gi.repository import Notify
 
 # Import Personal Files
-import netgui
 
 try:
     d = open(status_dir + "profile_to_edit", 'r')
     profile_to_edit = d.readline()
     if profile_to_edit != "":
         print(profile_to_edit)
-        if profile_to_edit != None:
+        if profile_to_edit is not None:
             print(profile_to_edit)
             profile_to_edit = profile_to_edit
         else:
@@ -47,62 +46,66 @@ class NetGUIProfileEditor(Gtk.Window):
         self.APindex = 0
         self.p = None
         self.builder = Gtk.Builder()
-        self.InitUI()
+        self.init_ui()
 
-    def InitUI(self):
+    def init_ui(self):
         # Create a "Builder", which basically allows me to import the Glade file for a complete interface.
         # I love Glade, btw. So much quicker than manually coding everything.
         GObject.type_register(GtkSource.View)
         self.builder.add_from_file(program_loc + "UI.glade")
 
         go = self.builder.get_object
-        profileEditor = go("profileEditor")
-        menuProfExit = go("exitProfWin")
-        saveBtn = go("saveMenuProf")
-        saveToolBtn = go("saveToolBtn")
-        openToolBtn = go("openToolBtn")
-        clearBtn = go("clearToolBtn")
-        attributesBtn = go("attributesToolBtn")
-        exitProfBtn = go("exitToolBtn")
+        profile_editor = go("profileEditor")
+        menu_prof_exit = go("exitProfWin")
+        save_button = go("saveMenuProf")
+        save_tool_button = go("saveToolBtn")
+        open_tool_button = go("openToolBtn")
+        clear_button = go("clearToolBtn")
+        attributes_button = go("attributesToolBtn")
+        exit_profile_button = go("exitToolBtn")
         self.netctlEditor = go("profileEditorView")
         self.buffer = go("textbuffer1")
 
         # Connecting the "clicked" signals of each button to the relevant function.
-        saveBtn.connect("activate", self.saveClicked)
-        saveToolBtn.connect("clicked", self.saveClicked)
-        attributesBtn.connect("clicked", self.attributesClicked)
-        clearBtn.connect("clicked", self.clearClicked)
-        profileEditor.connect("show", self.OnLoad)
-        exitProfBtn.connect("clicked", self.exitProfClicked)
-        menuProfExit.connect("activate", self.exitProfClicked)
-        openToolBtn.connect("clicked", self.openClicked)
+        save_button.connect("activate", self.save_clicked)
+        save_tool_button.connect("clicked", self.save_clicked)
+        attributes_button.connect("clicked", self.attributes_clicked)
+        clear_button.connect("clicked", self.clear_clicked)
+        profile_editor.connect("show", self.on_load)
+        exit_profile_button.connect("clicked", self.exit_prof_clicked)
+        menu_prof_exit.connect("activate", self.exit_prof_clicked)
+        open_tool_button.connect("clicked", self.open_clicked)
         # Opening the Prefereces Dialog.
-        profileEditor.show_all()
+        profile_editor.show_all()
 
-    def openClicked(self, e):
+    def open_clicked(self, e):
         pass
 
-    def saveClicked(self, e):
+    def save_clicked(self, e):
         pass
 
-    def attributesClicked(self, e):
+    def attributes_clicked(self, e):
         pass
 
-    def clearClicked(self, e):
+    def clear_clicked(self, e):
         pass
 
-    def OnLoad(self, e):
-        try:
-            txt=open(profile_to_edit).read()
-        except:
-            return False
-        self.buffer.set_text(txt)
-        self.buffer.set_data('filename', profile_to_edit)
-        self.buffer.set_modified(False)
-        self.buffer.place_cursor(self.buffer.get_start_iter())
-        return True
+    def on_load(self, e):
+        if profile_to_edit is None:
+            pass
+        else:
+            try:
+                txt=open(profile_to_edit).read()
+            except:
+                return False
+            self.buffer.set_text(txt)
+            self.buffer.set_data('filename', profile_to_edit)
+            self.buffer.set_modified(False)
+            self.buffer.place_cursor(self.buffer.get_start_iter())
+            return True
 
-    def exitProfClicked(self, e):
+    @staticmethod
+    def exit_prof_clicked(self, e):
         sys.exit()
 
 
