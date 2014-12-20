@@ -227,7 +227,7 @@ class NetGUI(Gtk.Window):
             self.NoWifiMode = 1
             scan_button.props.sensitive = False
             print(str(self.NoWifiMode))
-        elif args.nowifi is 1:
+        elif args.nowifi:
             self.NoWifiScan(None)
             self.NoWifiMode = 1
             scan_button.props.sensitive = False
