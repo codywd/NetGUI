@@ -21,6 +21,7 @@ Basic TODO:
 #! /usr/bin/python3
 
 # Import Standard Libraries
+import argparse
 import csv
 import fcntl
 import fileinput
@@ -42,7 +43,7 @@ pid_file = status_dir + "program.pid"
 img_loc = "/usr/share/netgui/imgs"
 pref_file = status_dir + "preferences.cfg"
 pid_number = os.getpid()
-arg_no_wifi = 0
+# arg_no_wifi = 0
 
 file_to_pass = ""
 
@@ -51,26 +52,54 @@ file_to_pass = ""
 from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
 from gi.repository import Notify
 
+# Checking for arguments in command line. We will never have a command line version of netgui (it's called netctl!)
+# for arg in sys.argv:
+#     if arg == '--help' or arg == '-h':
+#         print("The NetGUI help menu:\n")
+#         print("--version, -v: Find our your NetGUI Version.\n")
+#         print("--develop, -d: Run in development mode. If not a developer, do not use.")
+#         print("--nowifi, -n: Run in no-wifi-mode. Does not scan for networks. Uses profiles to connect.")
+#         sys.exit(0)
+#     if arg == '--version' or arg == '-v':
+#         print("Your netgui version is " + prog_ver + ".")
+#         sys.exit(0)
+#     if arg == '--develop' or arg == '-d':
+#         print("Running in development mode. All files are set to be in the development folder.")
+#         program_loc = "./"
+#     if arg == '--nowifi' or arg == '-n':
+#         print("Running in No Wifi mode!")
+#         argNoWifi = 1
+
+# argument parser
+parser = argparse.ArgumentParser(description='NetGUI; The NetCTL GUI! ' +
+                                             'We need root :)')
+parser.add_argument('-v', '--version',
+                    help='show the current version of NetGUI',
+                    action='store_true')
+parser.add_argument('-d', '--develop',
+                    help='run in development mode. ' +
+                    'If you are not a developer, do not use this.',
+                    action='store_true')
+parser.add_argument('-n', '--nowifi',
+                    help='run in no-wifi-mode. ' +
+                         'Does not scan for networks. ' +
+                         'Uses profiles to connect.',
+                    action='store_true')
+args = parser.parse_args()
+if args.version:
+    print('Your NetGUI version is ' + prog_ver + '.')
+    sys.exit(0)
+
+if args.develop:
+    print('Running in development mode. ' +
+          'All files are set to be in the development folder.')
+    program_loc = './'
+
+if args.nowifi:
+    print('Running in No Wifi mode!')
+
 # Import Project Libraries
 import profileEditor
-
-# Checking for arguments in command line. We will never have a command line version of netgui (it's called netctl!)
-for arg in sys.argv:
-    if arg == '--help' or arg == '-h':
-        print("The NetGUI help menu:\n")
-        print("--version, -v: Find our your NetGUI Version.\n")
-        print("--develop, -d: Run in development mode. If not a developer, do not use.")
-        print("--nowifi, -n: Run in no-wifi-mode. Does not scan for networks. Uses profiles to connect.")
-        sys.exit(0)
-    if arg == '--version' or arg == '-v':
-        print("Your netgui version is " + prog_ver + ".")
-        sys.exit(0)
-    if arg == '--develop' or arg == '-d':
-        print("Running in development mode. All files are set to be in the development folder.")
-        program_loc = "./"
-    if arg == '--nowifi' or arg == '-n':
-        print("Running in No Wifi mode!")
-        argNoWifi = 1
 
 # If our directory for netgui does not exist, create it.
 if os.path.exists(status_dir):
@@ -198,7 +227,7 @@ class NetGUI(Gtk.Window):
             self.NoWifiMode = 1
             scan_button.props.sensitive = False
             print(str(self.NoWifiMode))
-        elif arg_no_wifi is 1:
+        elif args.nowifi:
             self.NoWifiScan(None)
             self.NoWifiMode = 1
             scan_button.props.sensitive = False
@@ -228,7 +257,8 @@ class NetGUI(Gtk.Window):
         profiles = os.listdir("/etc/netctl/")
         i = 0
         self.NoWifiMode = 1
-        arg_no_wifi = 1
+        global args
+        args.nowifi = True
         for profile in profiles:
             if os.path.isfile("/etc/netctl/" + profile):
                 aps["row" + str(i)] = self.ap_store.append([profile, "", "", ""])
@@ -327,7 +357,8 @@ class NetGUI(Gtk.Window):
         self.ap_store.clear()
         self.no_wifi_scan()
         self.NoWifiMode = 1
-        arg_no_wifi = 1
+        global args
+        args.nowifi = True
 
     def on_btn_exit(self, e):
         if self.p is None:
