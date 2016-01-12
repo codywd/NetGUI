@@ -18,7 +18,7 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 4. notification-daemon
 
 ## Known Issues
-1. #21 (Preferences dialog is not implemented.)
+1. codywd#21 (Preferences dialog is not implemented.)
 2. #23 (Help function is not implemented.)
 3. #25 (No Tray Icon)
 4. #28 (Profile Editor is not implemented.)
