@@ -23,9 +23,7 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 ## General todo list / wish list
 
 - [ ] add tray icon
-- [x] mv all actual work out of the gui
 - [ ] interface with auto roaming
 - [ ] mild network diagnostics
-- [ ] build python module for netctl for outside apps
 - [ ] Incorporate surfatwork's Netctl icon/applet for Gnome shell (https://bbs.archlinux.org/viewtopic.php?id=182826)
 - [ ] Incorporate a launcher in Activities menu.
