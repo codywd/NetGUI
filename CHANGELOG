@@ -1,19 +1,6 @@
-0.8 -- Coming Soon
-1. Fixed "TypeError: onBtnExit() takes 2 positional arguments but 3 were given" when clicking "X" button.
-2. Broke scanning routines out of GUI loop.
-3. When in Profile View/NoWifiMode, now it will say whether or not
-   you are connected.
-4. Rewrote the --help/-h argument.
-5. Added various tools. (NetCTL stop-all, ProfileView)
-6. Now correctly skips the network that sometimes shows up labeled
-   \x00\x00\x00\x00\x00...
-7. Fixed bug where, if multiple profiles exist for same network
-   (for example, MyNetwork and netgui_MyNetwork), it will not
-   connect to one, then instantly connect to the other.
-8. Beginnings of profile editor. Will hopefully be much more
-   advanced, with auto-completion, syntax highlighting, and 
-   attribute insertion in the future.
-   
+0.7.6   
+1. Fix the fact that NetGUI could no longer scan.
+
 0.7.4
 1. Fixed misspelling. Device spelt as deviec
 2. Should now detect all wireless devices (it seems all wireless devices start with wl, instead of just wlp or wlan.)
