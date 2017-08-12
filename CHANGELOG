@@ -1,3 +1,8 @@
+0.7.7
+1. Fixed the various GI Import issues regarding require_version
+2. Hardcoded image paths to ensure they always show.
+3. Fixed GtkSourceView errors.
+
 0.7.6   
 1. Fix the fact that NetGUI could no longer scan.
 

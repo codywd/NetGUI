@@ -4,8 +4,8 @@ Basic TODO:
 2.  Finish preferences dialog (DONE!)
 2a. Implement preference choices throughout the program.
 3.  Make notifications optional
-4.  Write webbrowser.open wrapper script, where gid and uid are
-    gid are set to the user, so it correctly runs, and doesn't
+4.  Write webbrowser.open wrapper script, where gid and uid
+    set to the user, so it correctly runs, and doesn't
     error because it is set as root.
 5.  Add tray icon
 6.  Auto roaming capabilities (Preferences default profile, maybe
@@ -43,15 +43,18 @@ pid_file = status_dir + "program.pid"
 img_loc = "/usr/share/netgui/imgs"
 pref_file = status_dir + "preferences.cfg"
 pid_number = os.getpid()
-# arg_no_wifi = 0
+arg_no_wifi = 0
 
 file_to_pass = ""
 
 
 # Import Third Party Libraries
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('GtkSource', '3.0')
+gi.require_version('Notify', '0.7')
 from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
 from gi.repository import Notify
-
 # Checking for arguments in command line. We will never have a command line version of netgui (it's called netctl!)
 
 # argument parser
@@ -78,6 +81,7 @@ if args.develop:
     print('Running in development mode. ' +
           'All files are set to be in the development folder.')
     program_loc = './'
+    img_loc = "./imgs"
 
 if args.nowifi:
     print('Running in No Wifi mode!')
@@ -189,9 +193,26 @@ class NetGUI(Gtk.Window):
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
+        
+        # Hardcode (relative) image paths
+        APScanToolImg = self.builder.get_object("image1")
+        APScanToolImg.set_from_file(img_loc + "/APScan.png")
+        
+        ConnectToolImg = self.builder.get_object("image2")
+        ConnectToolImg.set_from_file(img_loc + "/connect.png")
+        
+        dConnectToolImg = self.builder.get_object("image3")
+        dConnectToolImg.set_from_file(img_loc + "/disconnect.png")
+        
+        prefToolImg = self.builder.get_object("image5")
+        prefToolImg.set_from_file(img_loc + "/preferences.png")
+        
+        exitToolImg = self.builder.get_object("image4")
+        exitToolImg.set_from_file(img_loc + "/exit.png")
+        
+        
 
         # Populate profiles menu
-        #menu = self.builder.get_object("menubar1")
         profile_menu = self.builder.get_object("profilesMenu")
         profile_menu.set_submenu(Gtk.Menu())
         profiles = os.listdir("/etc/netctl/")

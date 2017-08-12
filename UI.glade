@@ -1,5 +1,5 @@
 <interface>
-  <requires lib="gtk+" version="3.10" />
+  <requires lib="gtk+" version="3.20" />
   <requires lib="gtksourceview" version="3.0" />
   <object class="GtkAboutDialog" id="aboutDialog">
     <property name="can_focus">False</property>
@@ -9,12 +9,12 @@
     <property name="modal">True</property>
     <property name="type_hint">normal</property>
     <property name="program_name">NetGUI</property>
-    <property name="version">0.7.6</property>
-    <property name="copyright" translatable="yes">Copyright (c) 2013. Cody Dostal	</property>
+    <property name="version">0.7.7</property>
+    <property name="copyright" translatable="yes">Copyright (c) 2017. Cody Dostal	</property>
     <property name="comments" translatable="yes">NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.</property>
     <property name="website">https://github.com/codywd/NetGUI</property>
     <property name="website_label" translatable="yes">GitHub</property>
-    <property name="license" translatable="yes">Copyright (c) 2012 Cody Dostal, Pivotraze
+    <property name="license" translatable="yes">Copyright (c) 2017 Cody Dostal, Pivotraze
 
         Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation files
@@ -69,33 +69,31 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
         </child>
       </object>
     </child>
+    <child>
+      <placeholder />
+    </child>
   </object>
-  <object class="GtkAction" id="action1" />
   <object class="GtkEntryCompletion" id="entrycompletion1" />
+  <object class="GtkSourceBuffer" id="gtksourcebuffer" />
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="pixbuf">imgs/APScan.png</property>
   </object>
   <object class="GtkImage" id="image2">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="pixbuf">imgs/connect.png</property>
   </object>
   <object class="GtkImage" id="image3">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="pixbuf">imgs/disconnect.png</property>
   </object>
   <object class="GtkImage" id="image4">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="pixbuf">imgs/exit.png</property>
   </object>
   <object class="GtkImage" id="image5">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="pixbuf">imgs/preferences.png</property>
   </object>
   <object class="GtkWindow" id="mainWindow">
     <property name="can_focus">False</property>
@@ -423,6 +421,9 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
         </child>
       </object>
     </child>
+    <child type="titlebar">
+      <placeholder />
+    </child>
   </object>
   <object class="GtkListStore" id="liststore1" />
   <object class="GtkListStore" id="liststore2" />
@@ -521,6 +522,9 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
       <action-widget response="-1">pwdCancelBtn</action-widget>
       <action-widget response="1">pwdOkBtn</action-widget>
     </action-widgets>
+    <child>
+      <placeholder />
+    </child>
   </object>
   <object class="GtkDialog" id="prefDialog">
     <property name="can_focus">False</property>
@@ -737,17 +741,10 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
       <action-widget response="2">cancelButton</action-widget>
       <action-widget response="1">saveButton</action-widget>
     </action-widgets>
+    <child>
+      <placeholder />
+    </child>
   </object>
-  <object class="GtkRadioButton" id="radiobutton1">
-    <property name="label" translatable="yes">radiobutton</property>
-    <property name="can_focus">False</property>
-    <property name="receives_default">False</property>
-    <property name="double_buffered">False</property>
-    <property name="xalign">0</property>
-    <property name="active">True</property>
-    <property name="draw_indicator">True</property>
-  </object>
-  <object class="GtkTextBuffer" id="textbuffer1" />
   <object class="GtkWindow" id="profileEditor">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">NetGUI Profile Editor</property>
@@ -885,19 +882,18 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
           </packing>
         </child>
         <child>
-          <object class="GtkSourceView" id="profileEditorView">
+          <object class="GtkSourceView" id="profileSourceEdit">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="wrap_mode">word</property>
             <property name="left_margin">2</property>
             <property name="right_margin">2</property>
-            <property name="indent">2</property>
-            <property name="buffer">textbuffer1</property>
-            <property name="input_purpose">alpha</property>
             <property name="show_line_numbers">True</property>
             <property name="show_line_marks">True</property>
             <property name="tab_width">4</property>
+            <property name="auto_indent">True</property>
             <property name="insert_spaces_instead_of_tabs">True</property>
+            <property name="show_right_margin">True</property>
+            <property name="highlight_current_line">True</property>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -925,6 +921,9 @@ Gregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;</property>
           </packing>
         </child>
       </object>
+    </child>
+    <child type="titlebar">
+      <placeholder />
     </child>
   </object>
 </interface>
