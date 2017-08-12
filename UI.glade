@@ -9,7 +9,7 @@
     <property name="modal">True</property>
     <property name="type_hint">normal</property>
     <property name="program_name">NetGUI</property>
-    <property name="version">0.7.5</property>
+    <property name="version">0.7.6</property>
     <property name="copyright" translatable="yes">Copyright (c) 2013. Cody Dostal	</property>
     <property name="comments" translatable="yes">NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.</property>
     <property name="website">https://github.com/codywd/NetGUI</property>
