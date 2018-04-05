@@ -21,31 +21,15 @@ from gi.repository import Notify
 
 # Import Personal Files
 
-try:
-    d = open(status_dir + "profile_to_edit", 'r')
-    profile_to_edit = d.readline()
-    if profile_to_edit != "":
-        print(profile_to_edit)
-        if profile_to_edit is not None:
-            print(profile_to_edit)
-            profile_to_edit = profile_to_edit
-        else:
-            profile_to_edit = None
-    else:
-        profile_to_edit = None
-    d.close()
-except Exception as e:
-    print(e)
-    profile_to_edit = None
-
-
 class NetGUIProfileEditor(Gtk.Window):
-    def __init__(self):
+    def __init__(self, profile_to_edit):
         # Init Vars
         self.scanning = False
         self.APindex = 0
-        self.p = None
+        self.profile_to_edit = profile_to_edit
         self.builder = Gtk.Builder()
+    
+    def show(self):
         self.init_ui()
 
     def init_ui(self):
@@ -91,23 +75,16 @@ class NetGUIProfileEditor(Gtk.Window):
         pass
 
     def on_load(self, e):
-        if profile_to_edit is None:
+        if self.profile_to_edit is None:
             pass
         else:
             try:
-                txt=open(profile_to_edit).read()
-            except:
-                return False
+                txt=open(self.profile_to_edit, 'r').read()
+            except e:
+                print(e)
             self.buffer.set_text(txt)
-            #self.buffer.set_data('filename', profile_to_edit)
             self.buffer.set_modified(False)
             self.buffer.place_cursor(self.buffer.get_start_iter())
-            return True
 
     def exit_prof_clicked(self, e):
         self.profile_editor.hide()
-
-
-if __name__ == "__main__":
-    NetGUIProfileEditor()
-    Gtk.main()

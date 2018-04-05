@@ -95,7 +95,7 @@ if args.nowifi:
     print('Running in No Wifi mode!')
 
 # Import Project Libraries
-from Library import profile_editor
+from Library.profile_editor import NetGUIProfileEditor
 from Library.interface_control import InterfaceControl
 from Library.netctl_functions import NetCTL
 from Library.notifications import Notification
@@ -252,17 +252,15 @@ class NetGUI(Gtk.Window):
         window.show_all()
 
     def open_editor(self, e):
-        open(Path(status_dir, "profile_to_edit"), 'w+').close()
         select = self.ap_list.get_selection()
         network_ssid = self.get_ssid(select)
         if network_ssid is None:
-            profile_editor.NetGUIProfileEditor()
+            profile_edit_window = NetGUIProfileEditor(None)
+            profile_edit_window.show()
         else:
             profile = str(Path("/", "etc", "netctl", "netgui_" + network_ssid))
-            d = open(Path(status_dir, "profile_to_edit"), 'w+')
-            d.write(profile)
-            d.close()
-            profile_editor.NetGUIProfileEditor()
+            profile_edit_window = NetGUIProfileEditor(profile)
+            profile_edit_window.show()
 
     def no_wifi_scan(self):
         aps = {}
