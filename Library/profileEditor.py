@@ -105,7 +105,7 @@ class NetGUIProfileEditor(Gtk.Window):
             return True
 
     @staticmethod
-    def exit_prof_clicked(self, e):
+    def exit_prof_clicked(self):
         sys.exit()
 
 
