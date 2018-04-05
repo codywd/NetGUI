@@ -27,21 +27,22 @@ import fcntl
 import fileinput
 import multiprocessing
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
 
 # Setting base app information, such as version, and configuration directories/files.
 prog_ver = "0.8"
-profile_dir = "/etc/netctl/"
-status_dir = "/var/lib/netgui/"
-program_loc = "/usr/share/netgui/"
-interface_conf_file = status_dir + "interface.cfg"
-license_dir = '/usr/share/licenses/netgui/'
-scan_file = status_dir + "scan_results.log"
-pid_file = status_dir + "program.pid"
-img_loc = "/usr/share/netgui/imgs"
-pref_file = status_dir + "preferences.cfg"
+profile_dir = Path("/", "etc", "netctl")
+status_dir = Path("/", "var", "lib", "netgui")
+program_loc = Path("/", "/usr", "share", "netgui")
+interface_conf_file = Path(status_dir, "interface.cfg")
+license_dir = Path("/", "usr", "share", "licenses", "netgui")
+scan_file = Path(status_dir, "scan_results.log")
+pid_file = Path(status_dir, "program.pid")
+img_loc = Path(program_loc, "imgs")
+pref_file = Path(status_dir, "preferences.cfg")
 pid_number = os.getpid()
 arg_no_wifi = 0
 
@@ -87,20 +88,18 @@ if args.nowifi:
     print('Running in No Wifi mode!')
 
 # Import Project Libraries
-import profileEditor
+from Library import profile_editor
+from Library.interface_control import InterfaceControl
+from Library.netctl_functions import NetCTL
+from Library.notifications import Notification
+from Library.scanning import ScanRoutines
+from Library.generate_config import GenConfig
 
 # If our directory for netgui does not exist, create it.
-if os.path.exists(status_dir):
+if Path(status_dir).exists():
     pass
 else:
-    subprocess.call("mkdir " + status_dir, shell=True)
-
-# Let's make sure we're root, while at it.
-euid = os.geteuid()
-if euid != 0:
-    print("netgui needs to be run as root, since many commands we use requires it.\n" +
-          "Please sudo or su -c and try again.")
-    sys.exit(77)
+    os.mkdir(status_dir)
 
 # Let's also not allow any more than one instance of netgui.
 fp = open(pid_file, 'w')
@@ -128,6 +127,8 @@ class NetGUI(Gtk.Window):
         self.ap_store = Gtk.ListStore(str, str, str, str)
         self.interface_name = ""
         self.NoWifiMode = 0
+        self.interface_control = InterfaceControl()
+        self.generate_config = GenConfig(profile_dir)
         self.init_ui()
 
     def init_ui(self):
@@ -218,7 +219,7 @@ class NetGUI(Gtk.Window):
         profiles = os.listdir("/etc/netctl/")
         # Iterate through profiles directory, and add to "Profiles" Menu #
         for i in profiles:
-            if os.path.isfile("/etc/netctl/" + i):
+            if Path("/etc/netctl/" + i).is_file():
                 profile_menu.get_submenu().append(Gtk.MenuItem(label=i))
         #This should automatically detect their wireless device name. I'm not 100% sure
         #if it works on every computer, but we can only know from multiple tests. If
@@ -228,12 +229,12 @@ class NetGUI(Gtk.Window):
             n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in " +
                                         "No-Wifi Mode. Scan Button is disabled.", "dialog-information")
             n.show()
-            self.NoWifiScan(None)
+            self.no_wifi_scan()
             self.NoWifiMode = 1
             scan_button.props.sensitive = False
             print(str(self.NoWifiMode))
         elif args.nowifi:
-            self.NoWifiScan(None)
+            self.no_wifi_scan()
             self.NoWifiMode = 1
             scan_button.props.sensitive = False
         else:
@@ -249,13 +250,13 @@ class NetGUI(Gtk.Window):
         select = self.ap_list.get_selection()
         network_ssid = self.get_ssid(select)
         if network_ssid is None:
-            profileEditor.NetGUIProfileEditor()
+            profile_editor.NetGUIProfileEditor()
         else:
             profile = "/etc/netctl/netgui_" + network_ssid
             d = open(status_dir + "profile_to_edit", 'w')
             d.write(profile)
             d.close()
-            profileEditor.NetGUIProfileEditor()
+            profile_editor.NetGUIProfileEditor()
 
     def no_wifi_scan(self):
         aps = {}
@@ -265,7 +266,7 @@ class NetGUI(Gtk.Window):
         global args
         args.nowifi = True
         for profile in profiles:
-            if os.path.isfile("/etc/netctl/" + profile):
+            if Path("/etc/netctl/" + profile).is_file():
                 aps["row" + str(i)] = self.ap_store.append([profile, "", "", ""])
                 self.ap_store.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
                 self.ap_store.set(aps["row" + str(i)], 2, "N/A.")
@@ -387,7 +388,7 @@ class NetGUI(Gtk.Window):
         select = self.ap_list.get_selection()  # Get selected network
         ssid = self.get_ssid(select)  # Get SSID of selected network.
         for profile in os.listdir("/etc/netctl/"):
-            if os.path.isfile("/etc/netctl/" + profile):  # Is it a file, not dir?
+            if Path("/etc/netctl/" + profile).is_file():  # Is it a file, not dir?
                 with open("/etc/netctl/" + profile, 'r') as current_profile:
                     current_profile_name = profile
                     for line in current_profile:
@@ -421,7 +422,7 @@ class NetGUI(Gtk.Window):
                                         network_ssid + " using profile " + profile_name)
             n.show()
             net_interface = self.interface_name
-            InterfaceControl.down(self, net_interface)
+            self.interface_control.down(self, net_interface)
             NetCTL.stop_all(self)
             NetCTL.start(self, profile_name)
             n = Notify.Notification.new("Connected to new network!", "You are now connected to " + network_ssid,
@@ -436,8 +437,8 @@ class NetGUI(Gtk.Window):
                 profile = "netgui_" + network_ssid
                 print("profile = " + profile)
                 net_interface = self.interface_name
-                if os.path.isfile(profile_dir + profile):
-                    InterfaceControl.down(self, net_interface)
+                if Path(profile_dir + profile).is_file():
+                    self.interface_control.down(self, net_interface)
                     NetCTL.stop_all(self)
                     NetCTL.start(profile)
                     n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
@@ -449,7 +450,7 @@ class NetGUI(Gtk.Window):
                         key = "none"
                     else:
                         key = self.get_network_pw()
-                    create_config(network_ssid, self.interface_name, network_security, key)
+                    self.generate_config.create_wireless_config(network_ssid, self.interface_name, network_security, key)
                     try:
                         InterfaceControl.down(self, net_interface)
                         NetCTL.stop_all(self)
@@ -650,7 +651,7 @@ def check_output(self, command):
 
 def get_interface():
     interface_name = ""
-    if not os.path.isfile(interface_conf_file):
+    if not Path(interface_conf_file).is_file():
 
         devices = os.listdir("/sys/class/net")
         for device in devices:
