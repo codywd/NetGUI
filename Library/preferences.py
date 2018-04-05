@@ -1,34 +1,24 @@
 # Import Standard Libraries
-import csv
-import fcntl
-import fileinput
-import multiprocessing
+import json
 import os
 from pathlib import Path
-import shutil
-import subprocess
 import sys
-import webbrowser
-
-# Setting base app information, such as version, and configuration directories/files.
-profile_dir = "/etc/netctl/"
-#program_loc = "/usr/share/netgui/"
-program_loc = "./"
-status_dir = "/var/lib/netgui/"
 
 # Import Third Party Libraries
 from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
 
 class Preferences(Gtk.Window):
-    def __init__(self):
+    def __init__(self, program_loc):
         # Init Vars
-        self.pref_file = pref_file = Path("/", "var", "lib", "netgui", "preferences.cfg")
+        self.pref_file = Path("/", "var", "lib", "netgui", "preferences.json")
         self.builder = Gtk.Builder()
+        self.program_loc = program_loc
+        self.status_dir = Path("/", "var", "lib", "netgui")
         self.init_ui()
 
     def init_ui(self):
         GObject.type_register(GtkSource.View)
-        self.builder.add_from_file(program_loc + "UI.glade")
+        self.builder.add_from_file(self.program_loc + "UI.glade")
 
         # Get everything we need from UI.glade
         go = self.builder.get_object
@@ -39,7 +29,7 @@ class Preferences(Gtk.Window):
         self.default_profile = go("defaultProfilePath")
         self.unsecure_switch = go("unsecureSwitch")
         self.autoconnect_switch = go("autoconnectSwitch")
-        self.notification_type = go("self.notification_type")
+        self.notification_type = go("notification_type")
         filechooser = go("chooseDefaultProfile")
 
         # Connecting the "clicked" signals of each button to the relevant function.
@@ -50,10 +40,10 @@ class Preferences(Gtk.Window):
         # Opening the Preferences Dialog.
         self.preferences_dialog.run()
 
-    def cancel_clicked(self):
+    def cancel_clicked(self, e):
         self.preferences_dialog.hide()
 
-    def choose_profile(self):
+    def choose_profile(self, e):
         dialog = Gtk.FileChooserDialog("Choose your default profile.", None,
                                         Gtk.FileChooserAction.OPEN,
                                         (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
@@ -68,68 +58,36 @@ class Preferences(Gtk.Window):
 
         dialog.destroy()
 
-    # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
-    # and because it makes the program flow more, IMHO
     def save_clicked(self, e):
-        f = open(status_dir + "interface.cfg", 'w+')
-        d = open(self.pref_file, 'r+')
-        cur_int = f.read()
-        f.close()
         new_int = self.interface_entry.get_text()
-        if new_int != cur_int:
-            for line in fileinput.input(status_dir + "interface.cfg", inplace=True):
-                print(new_int)
+        with open(Path(self.status_dir, "interface.cfg"), 'w+') as interface_file:
+            interface_file.write(new_int)
 
-        if self.default_profile != "" or None:
-            d.write("Default Profile: " + self.default_profile.get_text() + "\n")
+        json_prefs = {
+            "default_profile": self.default_profile.get_text(),
+            "unsecure_status": self.unsecure_switch.get_active(),
+            "autoconnect": self.autoconnect_switch.get_active(),
+            "notification_type": self.notification_type.get_active_text()
+        }
 
-        if self.unsecure_switch.get_active() is True:
-            d.write("Unsecure Status: Yes\n")
-        else:
-            d.write("Unsecure Status: No\n")
+        with open(self.pref_file, 'w+') as outfile:
+            json.dump(json_prefs, outfile)
 
-        if self.autoconnect_switch.get_active() is True:
-            d.write("Autoconnect Status: Yes\n")
-        else:
-            d.write("Autoconnect Status: No\n")
+        self.preferences_dialog.destroy()
 
-        nt = self.notification_type.get_active_text()
-        d.write("NoteType: " + nt + "\n")
-        d.close()
-        self.preferences_dialog.hide()
-
-    def on_load(self):
-        f = open(status_dir + "interface.cfg", 'r+')
-        d = open(self.pref_file, 'r+')
+    def on_load(self, e):
+        f = open(Path(self.status_dir, "interface.cfg"), 'r+')
+        data = json.load(open(self.pref_file))
         self.interface_entry.set_text(str(f.read()))
-        for line in d:
-            if "Default Profile:" in line:
-                self.default_profile.set_text(str(line)[17:])
-            if "Unsecure Status:" in line:
-                if "No" in line:
-                    self.unsecure_switch.set_active(False)
-                elif "Yes" in line:
-                    self.unsecure_switch.set_active(True)
-            if "Autoconnect Status:" in line:
-                if "No" in line:
-                    self.autoconnect_switch.set_active(False)
-                elif "Yes" in line:
-                    self.autoconnect_switch.set_active(True)
-            if "NoteType:" in line:
-                if "Center" in line:
-                    self.notification_type.set_active_id("1")
-                elif "Message" in line:
-                    self.notification_type.set_active_id("2")
-                elif "Terminal" in line:
-                    self.notification_type.set_active_id("3")
+
+        self.default_profile.set_text(data["default_profile"])
+        self.unsecure_switch.set_active(data["unsecure_status"])
+        self.autoconnect_switch.set_active(data["autoconnect"])
+        if "Center" in data["notification_type"]:
+            self.notification_type.set_active_id("1")
+        elif "Message" in data["notification_type"]:
+            self.notification_type.set_active_id("2")
+        elif "Terminal" in data["notification_type"]:
+            self.notification_type.set_active_id("3")
+
         f.close()
-        d.close()
-
-    @staticmethod
-    def exit_prof_clicked(self):
-        sys.exit()
-
-
-if __name__ == "__main__":
-    Preferences()
-    Gtk.main()

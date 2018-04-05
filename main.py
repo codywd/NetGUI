@@ -62,7 +62,7 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
 gi.require_version('Notify', '0.7')
 from gi.repository import Gtk, Gdk, GObject, GLib, GtkSource
-from gi.repository import Notify
+#from gi.repository import Notify
 # Checking for arguments in command line. We will never have a command line version of netgui (it's called netctl!)
 
 # argument parser
@@ -129,7 +129,7 @@ class NetGUI(Gtk.Window):
         self.p = None
         self.builder = Gtk.Builder()
         GObject.type_register(GtkSource.View)
-        self.builder.add_from_file(program_loc + "UI.glade")
+        self.builder.add_from_file(str(Path(str(program_loc) + "UI.glade")))
         self.dialog = self.builder.get_object("passwordDialog")
         self.ap_list = self.builder.get_object("treeview1")
         self.ap_store = Gtk.ListStore(str, str, str, str)
@@ -232,9 +232,9 @@ class NetGUI(Gtk.Window):
         #it doesn't work, I will re-implement the old way.
         self.interface_name = get_interface()
         if self.interface_name == "":
-            n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in " +
-                                        "No-Wifi Mode. Scan Button is disabled.", "dialog-information")
-            n.show()
+            #n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in " +
+            #                            "No-Wifi Mode. Scan Button is disabled.", "dialog-information")
+            #n.show()
             self.no_wifi_scan()
             self.NoWifiMode = 1
             scan_button.props.sensitive = False
@@ -248,7 +248,7 @@ class NetGUI(Gtk.Window):
             self.NoWifiMode = 0
 
         # Start initial scan
-        Notify.init("NetGUI")
+        #Notify.init("NetGUI")
         window.show_all()
 
     def open_editor(self, e):
@@ -423,17 +423,17 @@ class NetGUI(Gtk.Window):
         if does_profile_exist is 1:
             select = self.ap_list.get_selection()
             network_ssid = self.get_ssid(select)
-            n = Notify.Notification.new("Found existing profile.",
-                                        "NetCTL found an existing profile for this network. Connecting to " +
-                                        network_ssid + " using profile " + profile_name)
-            n.show()
+            #n = Notify.Notification.new("Found existing profile.",
+            #                            "NetCTL found an existing profile for this network. Connecting to " +
+            #                            network_ssid + " using profile " + profile_name)
+            #n.show()
             net_interface = self.interface_name
-            self.interface_control.down(self, net_interface)
+            self.interface_control.down(net_interface)
             NetCTL.stop_all(self)
             NetCTL.start(self, profile_name)
-            n = Notify.Notification.new("Connected to new network!", "You are now connected to " + network_ssid,
-                                        "dialog-information")
-            n.show()
+            #n = Notify.Notification.new("Connected to new network!", "You are now connected to " + network_ssid,
+            #                            "dialog-information")
+            #n.show()
 
         elif does_profile_exist == 0:
             if self.NoWifiMode == 0:
@@ -444,12 +444,12 @@ class NetGUI(Gtk.Window):
                 print("profile = " + profile)
                 net_interface = self.interface_name
                 if Path(profile_dir + profile).is_file():
-                    self.interface_control.down(self, net_interface)
+                    self.interface_control.down(net_interface)
                     NetCTL.stop_all(self)
                     NetCTL.start(profile)
-                    n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
-                                                network_ssid, "dialog-information")
-                    n.show()
+                    # n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
+                    #                             network_ssid, "dialog-information")
+                    # n.show()
                 else:
                     network_security = self.get_security(select)
                     if network_security == "Open":
@@ -461,15 +461,16 @@ class NetGUI(Gtk.Window):
                         InterfaceControl.down(self, net_interface)
                         NetCTL.stop_all(self)
                         NetCTL.start(self, profile)
-                        n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
-                                                    network_ssid, "dialog-information")
-                        n.show()
+                        # n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
+                        #                             network_ssid, "dialog-information")
+                        # n.show()
                     except Exception as e:
-                        n = Notify.Notification.new("Error!", "There was an error. The error was: " + str(e) +
-                                                    ". Please report an issue at the github page if it persists.",
-                                                    "dialog-information")
-                        n.show()
-                        Notify.uninit()
+                        pass
+                        # n = Notify.Notification.new("Error!", "There was an error. The error was: " + str(e) +
+                        #                             ". Please report an issue at the github page if it persists.",
+                        #                             "dialog-information")
+                        # n.show()
+                        # Notify.uninit()
             elif self.NoWifiMode == 1:
                 select = self.ap_list.get_selection()
                 nwm_profile = self.get_ssid(select)
@@ -478,14 +479,15 @@ class NetGUI(Gtk.Window):
                     InterfaceControl.down(self, net_interface)
                     NetCTL.stop_all(self)
                     NetCTL.start(self, nwm_profile)
-                    n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + nwm_profile,
-                                                "dialog-information")
-                    n.show()
+                    # n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + nwm_profile,
+                    #                             "dialog-information")
+                    # n.show()
                 except:
-                    n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the "
-                                                + "github page if it persists.", "dialog-information")
-                    n.show()
-                    Notify.uninit()
+                    pass
+                    # n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the "
+                    #                             + "github page if it persists.", "dialog-information")
+                    # n.show()
+                    # Notify.uninit()
             self.start_scan(self)
 
     def get_network_pw(self):
@@ -518,21 +520,21 @@ class NetGUI(Gtk.Window):
         NetCTL.stop(self, profile)
         InterfaceControl.down(self, interface_name)
         self.start_scan(None)
-        n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + network_ssid,
-                                    "dialog-information")
-        n.show()
+        # n = Notify.Notification.new("Disconnected from network!", "You are now disconnected from " + network_ssid,
+        #                             "dialog-information")
+        # n.show()
 
     def disconnect_all(self, e):
         interface_name = get_interface()
         NetCTL.stop_all(None)
         InterfaceControl.down(self, interface_name)
         self.start_scan(None)
-        n = Notify.Notification.new("Disconnected from all networks!", "You are now disconnected from all networks.",
-                                    "dialog-information")
-        n.show()
+        # n = Notify.Notification.new("Disconnected from all networks!", "You are now disconnected from all networks.",
+        #                             "dialog-information")
+        # n.show()
 
     def preferences_clicked(self, e):
-        Preferences()
+        Preferences(program_loc)
 
     #TODO: Write help file!
     def on_help_clicked(self, e):
