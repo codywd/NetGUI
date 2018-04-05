@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+from pathlib import Path
 import subprocess
 
 class ScanRoutines():
@@ -11,10 +12,10 @@ class ScanRoutines():
         self.interface = interface
 
     def scan(self):
-        if os.path.exists(self.scan_file):
+        if Path(self.scan_file).exists():
             os.remove(self.scan_file)
-        if os.path.exists(self.status_dir + "final_results.log"):
-            os.remove(self.status_dir + "final_results.log")
+        if Path(self.status_dir, "final_results.log").exists():
+            os.remove(Path(self.status_dir, "final_results.log"))
         p = multiprocessing.Process(target=ScanRoutines.run_scan(self))
         p.start()
         p.join()
@@ -24,5 +25,5 @@ class ScanRoutines():
         print("Please wait! Now Scanning.")
         # Huge thanks to joukewitteveen on GitHub for the following command!! Slightly modified from his comment
         subprocess.call('bash -c "source /usr/lib/netctl/globals; source /usr/lib/netctl/wpa; wpa_supplicant_scan ' +
-                        self.interface + ' 3,4,5" >> ' + self.scan_file, shell=True)
+                        self.interface + ' 3,4,5" >> ' + str(self.scan_file), shell=True)
         print("Done Scanning!")

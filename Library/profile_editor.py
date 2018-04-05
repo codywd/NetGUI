@@ -55,7 +55,7 @@ class NetGUIProfileEditor(Gtk.Window):
         self.builder.add_from_file(program_loc + "UI.glade")
 
         go = self.builder.get_object
-        profile_editor = go("profileEditor")
+        self.profile_editor = go("profileEditor")
         menu_prof_exit = go("exitProfWin")
         save_button = go("saveMenuProf")
         save_tool_button = go("saveToolBtn")
@@ -64,19 +64,19 @@ class NetGUIProfileEditor(Gtk.Window):
         attributes_button = go("attributesToolBtn")
         exit_profile_button = go("exitToolBtn")
         self.netctlEditor = go("profileEditorView")
-        self.buffer = go("textbuffer1")
+        self.buffer = go("gtksourcebuffer")
 
         # Connecting the "clicked" signals of each button to the relevant function.
         save_button.connect("activate", self.save_clicked)
         save_tool_button.connect("clicked", self.save_clicked)
         attributes_button.connect("clicked", self.attributes_clicked)
         clear_button.connect("clicked", self.clear_clicked)
-        profile_editor.connect("show", self.on_load)
+        self.profile_editor.connect("show", self.on_load)
         exit_profile_button.connect("clicked", self.exit_prof_clicked)
         menu_prof_exit.connect("activate", self.exit_prof_clicked)
         open_tool_button.connect("clicked", self.open_clicked)
         # Opening the Prefereces Dialog.
-        profile_editor.show_all()
+        self.profile_editor.show_all()
 
     def open_clicked(self, e):
         pass
@@ -99,14 +99,13 @@ class NetGUIProfileEditor(Gtk.Window):
             except:
                 return False
             self.buffer.set_text(txt)
-            self.buffer.set_data('filename', profile_to_edit)
+            #self.buffer.set_data('filename', profile_to_edit)
             self.buffer.set_modified(False)
             self.buffer.place_cursor(self.buffer.get_start_iter())
             return True
 
-    @staticmethod
-    def exit_prof_clicked(self):
-        sys.exit()
+    def exit_prof_clicked(self, e):
+        self.profile_editor.hide()
 
 
 if __name__ == "__main__":

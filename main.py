@@ -252,27 +252,27 @@ class NetGUI(Gtk.Window):
         window.show_all()
 
     def open_editor(self, e):
-        open(status_dir + "profile_to_edit", 'w').close()
+        open(Path(status_dir, "profile_to_edit"), 'w+').close()
         select = self.ap_list.get_selection()
         network_ssid = self.get_ssid(select)
         if network_ssid is None:
             profile_editor.NetGUIProfileEditor()
         else:
-            profile = "/etc/netctl/netgui_" + network_ssid
-            d = open(status_dir + "profile_to_edit", 'w')
+            profile = str(Path("/", "etc", "netctl", "netgui_" + network_ssid))
+            d = open(Path(status_dir, "profile_to_edit"), 'w+')
             d.write(profile)
             d.close()
             profile_editor.NetGUIProfileEditor()
 
     def no_wifi_scan(self):
         aps = {}
-        profiles = os.listdir("/etc/netctl/")
+        profiles = os.listdir(Path("/", "etc", "netctl"))
         i = 0
         self.NoWifiMode = 1
         global args
         args.nowifi = True
         for profile in profiles:
-            if Path("/etc/netctl/" + profile).is_file():
+            if Path("/", "etc", "netctl" + profile).is_file():
                 aps["row" + str(i)] = self.ap_store.append([profile, "", "", ""])
                 self.ap_store.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
                 self.ap_store.set(aps["row" + str(i)], 2, "N/A.")
@@ -287,7 +287,8 @@ class NetGUI(Gtk.Window):
                 i += 1
 
     def start_scan(self, e):
-        ScanRoutines.scan(None)
+        run_scan = ScanRoutines(self.interface_name, scan_file, status_dir)
+        run_scan.scan()
         self.check_scan()
 
     def check_scan(self):
@@ -296,9 +297,9 @@ class NetGUI(Gtk.Window):
         real_dir = real_dir.strip()
         sf.close()
         print(real_dir)
-        shutil.move(real_dir, status_dir + "final_results.log")
+        shutil.move(real_dir, Path(status_dir, "final_results.log"))
 
-        with open(status_dir + "final_results.log") as tsv:
+        with open(Path(status_dir, "final_results.log")) as tsv:
             self.ap_store.clear()
 
             r = csv.reader(tsv, dialect='excel-tab')
@@ -393,9 +394,9 @@ class NetGUI(Gtk.Window):
         found_profile = 0
         select = self.ap_list.get_selection()  # Get selected network
         ssid = self.get_ssid(select)  # Get SSID of selected network.
-        for profile in os.listdir("/etc/netctl/"):
-            if Path("/etc/netctl/" + profile).is_file():  # Is it a file, not dir?
-                with open("/etc/netctl/" + profile, 'r') as current_profile:
+        for profile in os.listdir(Path("/", "etc", "netctl")):
+            if Path("/", "etc", "netctl", profile).is_file():  # Is it a file, not dir?
+                with open(Path("/", "etc", "netctl", profile), 'r') as current_profile:
                     current_profile_name = profile
                     for line in current_profile:
                         if "ESSID" in line.strip():
@@ -443,7 +444,7 @@ class NetGUI(Gtk.Window):
                 profile = "netgui_" + network_ssid
                 print("profile = " + profile)
                 net_interface = self.interface_name
-                if Path(profile_dir + profile).is_file():
+                if Path(profile_dir, profile).is_file():
                     self.interface_control.down(net_interface)
                     NetCTL.stop_all(self)
                     NetCTL.start(profile)
@@ -505,7 +506,7 @@ class NetGUI(Gtk.Window):
             return model[treeiter][0]
 
     @staticmethod
-    def get_security(self, selection):
+    def get_security(selection):
         model, treeiter = selection.get_selected()
         if treeiter is not None:
             security_type = model[treeiter][2]
