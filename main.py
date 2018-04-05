@@ -48,6 +48,13 @@ arg_no_wifi = 0
 
 file_to_pass = ""
 
+# Create Directories if needed
+if not Path(status_dir).exists():
+    os.makedirs(status_dir)
+if not Path(program_loc).exists():
+    os.makedirs(program_loc)
+if not Path(license_dir).exists():
+    os.makedirs(license_dir)
 
 # Import Third Party Libraries
 import gi
@@ -94,6 +101,7 @@ from Library.netctl_functions import NetCTL
 from Library.notifications import Notification
 from Library.scanning import ScanRoutines
 from Library.generate_config import GenConfig
+from Library.preferences import Preferences
 
 # If our directory for netgui does not exist, create it.
 if Path(status_dir).exists():
@@ -210,8 +218,6 @@ class NetGUI(Gtk.Window):
         
         exitToolImg = self.builder.get_object("image4")
         exitToolImg.set_from_file(img_loc + "/exit.png")
-        
-        
 
         # Populate profiles menu
         profile_menu = self.builder.get_object("profilesMenu")
@@ -526,103 +532,7 @@ class NetGUI(Gtk.Window):
         n.show()
 
     def preferences_clicked(self, e):
-        # Setting up the cancel function here fixes a weird bug where, if outside of the prefClicked function
-        # it causes an extra button click for each time the dialog is hidden. The reason we hide the dialog
-        # and not destroy it, is it causes another bug where the dialog becomes a small little
-        # titlebar box. I don't know how to fix either besides this.
-        def on_load(self):
-            f = open(status_dir + "interface.cfg", 'r+')
-            d = open(pref_file, 'r+')
-            interface_entry.set_text(str(f.read()))
-            for line in d:
-                if "Default Profile:" in line:
-                    default_profile.set_text(str(line)[17:])
-                if "Unsecure Status:" in line:
-                    if "No" in line:
-                        unsecure_switch.set_active(False)
-                    elif "Yes" in line:
-                        unsecure_switch.set_active(True)
-                if "Autoconnect Status:" in line:
-                    if "No" in line:
-                        autoconnect_switch.set_active(False)
-                    elif "Yes" in line:
-                        autoconnect_switch.set_active(True)
-                if "NoteType:" in line:
-                    if "Center" in line:
-                        notification_type.set_active_id("1")
-                    elif "Message" in line:
-                        notification_type.set_active_id("2")
-                    elif "Terminal" in line:
-                        notification_type.set_active_id("3")
-            f.close()
-            d.close()
-
-        def cancel_clicked(self):
-            preferences_dialog.hide()
-
-        def choose_profile(self):
-            dialog = Gtk.FileChooserDialog("Choose your default profile.", None,
-                                           Gtk.FileChooserAction.OPEN,
-                                           (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                                           Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-            dialog.set_current_folder("/etc/netctl")
-
-            response = dialog.run()
-            if response == Gtk.ResponseType.OK:
-                default_profile.set_text(dialog.get_filename())
-            elif response == Gtk.ResponseType.CANCEL:
-                print("Cancel clicked")
-
-            dialog.destroy()
-
-        # Setting up the saveClicked function within the prefClicked function just because it looks cleaner
-        # and because it makes the program flow more, IMHO
-        def save_clicked(self):
-            f = open(status_dir + "interface.cfg", 'r+')
-            d = open(pref_file, 'r+')
-            cur_int = f.read()
-            f.close()
-            new_int = interface_entry.get_text()
-            if new_int != cur_int:
-                for line in fileinput.input(status_dir + "interface.cfg", inplace=True):
-                    print(new_int)
-
-            if default_profile != "" or None:
-                d.write("Default Profile: " + default_profile.get_text() + "\n")
-
-            if unsecure_switch.get_active() is True:
-                d.write("Unsecure Status: Yes\n")
-            else:
-                d.write("Unsecure Status: No\n")
-
-            if autoconnect_switch.get_active() is True:
-                d.write("Autoconnect Status: Yes\n")
-            else:
-                d.write("Autoconnect Status: No\n")
-
-            nt = notification_type.get_active_text()
-            d.write("NoteType: " + nt + "\n")
-            d.close()
-            preferences_dialog.hide()
-        # Get everything we need from UI.glade
-        go = self.builder.get_object
-        preferences_dialog = go("prefDialog")
-        save_button = go("saveButton")
-        cancel_button = go("cancelButton")
-        interface_entry = go("wiInterface")
-        default_profile = go("defaultProfilePath")
-        unsecure_switch = go("unsecureSwitch")
-        autoconnect_switch = go("autoconnectSwitch")
-        notification_type = go("notification_type")
-        filechooser = go("chooseDefaultProfile")
-
-        # Connecting the "clicked" signals of each button to the relevant function.
-        save_button.connect("clicked", save_clicked)
-        cancel_button.connect("clicked", cancel_clicked)
-        preferences_dialog.connect("show", on_load)
-        filechooser.connect("clicked", choose_profile)
-        # Opening the Preferences Dialog.
-        preferences_dialog.run()
+        Preferences()
 
     #TODO: Write help file!
     def on_help_clicked(self, e):
