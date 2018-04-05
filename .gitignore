@@ -203,3 +203,6 @@ pip-log.txt
 *.tar.gz
 .tar.gz
 .idea/
+
+#vscode
+.vscode/
