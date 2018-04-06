@@ -128,7 +128,7 @@ class NetGUI(Gtk.Window):
         self.p = None
         self.builder = Gtk.Builder()
         GObject.type_register(GtkSource.View)
-        self.builder.add_from_file(str(Path(str(program_loc) + "UI.glade")))
+        self.builder.add_from_file(str(Path(str(program_loc), "UI.glade")))
         self.dialog = self.builder.get_object("passwordDialog")
         self.ap_list = self.builder.get_object("treeview1")
         self.ap_store = Gtk.ListStore(str, str, str, str)
