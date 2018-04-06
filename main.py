@@ -25,7 +25,6 @@ import argparse
 import csv
 import fcntl
 import fileinput
-import multiprocessing
 import os
 from pathlib import Path
 import shutil
