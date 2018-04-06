@@ -204,19 +204,19 @@ class NetGUI(Gtk.Window):
         
         # Hardcode (relative) image paths
         APScanToolImg = self.builder.get_object("image1")
-        APScanToolImg.set_from_file(img_loc + "/APScan.png")
+        APScanToolImg.set_from_file(str(Path(img_loc, "APScan.png")))
         
         ConnectToolImg = self.builder.get_object("image2")
-        ConnectToolImg.set_from_file(img_loc + "/connect.png")
+        ConnectToolImg.set_from_file(str(Path(img_loc, "connect.png")))
         
         dConnectToolImg = self.builder.get_object("image3")
-        dConnectToolImg.set_from_file(img_loc + "/disconnect.png")
+        dConnectToolImg.set_from_file(str(Path(img_loc, "disconnect.png")))
         
         prefToolImg = self.builder.get_object("image5")
-        prefToolImg.set_from_file(img_loc + "/preferences.png")
+        prefToolImg.set_from_file(str(Path(img_loc, "preferences.png")))
         
         exitToolImg = self.builder.get_object("image4")
-        exitToolImg.set_from_file(img_loc + "/exit.png")
+        exitToolImg.set_from_file(str(Path(img_loc, "exit.png")))
 
         # Populate profiles menu
         profile_menu = self.builder.get_object("profilesMenu")
