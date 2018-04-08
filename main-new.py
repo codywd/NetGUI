@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
+from queue import Queue, Empty
 
 # Import third party libraries
 import gi
@@ -91,7 +93,20 @@ with open(pid_file, 'w') as fp:
 
 class NetGUI(Gtk.Window):
     def __init__(self):
-        pass
+        #self.scanning = False
+        self.thread = None
+        self.APindex = 0
+        self.builder = Gtk.Builder()
+        GObject.type_register(GtkSource.View)
+        self.builder.add_from_file(str(Path(program_loc, "UI.glade")))
+        self.password_dialog = self.builder.get_object("passwordDialog")
+        self.ap_list = self.builder.get_object("treeview1")
+        self.ap_store = Gtk.ListStore(str, str, str, str)
+        self.interface_name = ""
+        self.NoWifiMode = False
+        self.interface_control = InterfaceControl()
+        self.generate_config = GenConfig(profile_dir)
+        self.init_ui()
 
     def init_ui(self):
         is_connected() # Are we connected to a network?
@@ -141,35 +156,35 @@ class NetGUI(Gtk.Window):
         # Set all the handlers I defined in glade to local functions.
         handlers = {
             "onSwitch": self.on_switch,
-            "onExit": self.on_btn_exit,
+            "onExit": self.on_exit,
             "onAboutClicked": self.about_clicked,
             "onScan": self.start_scan,
-            "onConnect": self.profile_exists,
+            "onConnect": self.get_profile,
             "onDConnect": self.disconnect_clicked,
             "onPrefClicked": self.preferences_clicked,
-            "onHelpClicked": self.on_help_clicked,
+            "onHelpClicked": self.help_clicked,
             "onIssueReport": self.report_issue,
-            "onDAll": self.disconnect_all,
-            "onEditorActivate": self.open_editor
+            "onDAll": self.disconnect_all_clicked,
+            "onEditorActivate": self.open_profile_editor
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
         
         # Hardcode (relative) image paths
         APScanToolImg = self.builder.get_object("image1")
-        APScanToolImg.set_from_file(img_loc + "/APScan.png")
+        APScanToolImg.set_from_file(str(Path(img_loc, "APScan.png")))
         
         ConnectToolImg = self.builder.get_object("image2")
-        ConnectToolImg.set_from_file(img_loc + "/connect.png")
+        ConnectToolImg.set_from_file(str(Path(img_loc, "connect.png")))
         
         dConnectToolImg = self.builder.get_object("image3")
-        dConnectToolImg.set_from_file(img_loc + "/disconnect.png")
+        dConnectToolImg.set_from_file(str(Path(img_loc, "disconnect.png")))
         
         prefToolImg = self.builder.get_object("image5")
-        prefToolImg.set_from_file(img_loc + "/preferences.png")
+        prefToolImg.set_from_file(str(Path(img_loc, "preferences.png")))
         
         exitToolImg = self.builder.get_object("image4")
-        exitToolImg.set_from_file(img_loc + "/exit.png")
+        exitToolImg.set_from_file(str(Path(img_loc, "exit.png")))
 
         # Populate profiles menu
         profile_menu = self.builder.get_object("profilesMenu")
@@ -187,57 +202,176 @@ class NetGUI(Gtk.Window):
             #n = Notify.Notification.new("Could not detect interface!", "No interface was detected. Now running in " +
             #                            "No-Wifi Mode. Scan Button is disabled.", "dialog-information")
             #n.show()
-            self.no_wifi_scan()
-            self.NoWifiMode = 1
+            self.no_wifi_scan_mode()
+            self.NoWifiMode = True
             scan_button.props.sensitive = False
             print(str(self.NoWifiMode))
         elif args.nowifi:
-            self.no_wifi_scan()
-            self.NoWifiMode = 1
+            self.no_wifi_scan_mode()
+            self.NoWifiMode = True
             scan_button.props.sensitive = False
         else:
             #self.startScan(None)
-            self.NoWifiMode = 0
+            self.NoWifiMode = False
 
         # Start initial scan
         #Notify.init("NetGUI")
         window.show_all()
 
     def open_profile_editor(self, e):
-        pass
+        select = self.ap_list.get_selection()
+        network_ssid = self.get_ssid(select)
+        if network_ssid is None:
+            profile_edit_window = NetGUIProfileEditor(None)
+            profile_edit_window.show()
+        else:
+            profile = str(Path("/", "etc", "netctl", self.get_profile()))
+            profile_edit_window = NetGUIProfileEditor(profile)
+            profile_edit_window.show()
+
 
     def no_wifi_scan_mode(self):
         pass
 
-    def start_scan(self):
-        run_scan = ScanRoutines(self.interface_name, scan_file, status_dir)
-        print("starting scan...")
-        threading.Thread(target=run_scan.scan())
-        print("done scanning")
+    def start_scan(self, e):
+        is_scan_done_queue = Queue()
+        run_scan = ScanRoutines(self.interface_name, scan_file, status_dir, is_scan_done_queue)
+        scan_thread = threading.Thread(target=run_scan.scan)
+        scan_thread.daemon = True
+        scan_thread.start()
+
+        self.is_scan_done(is_scan_done_queue, scan_thread)
+
+    def is_scan_done(self, completion_queue, thread_to_join):
+        try:
+            status = completion_queue.get(False)
+            print(status)
+            #thread_to_join.join()
+            self.begin_check_scan()
+        except Empty:
+            timer = threading.Timer(0.5, self.is_scan_done, args=[completion_queue, thread_to_join])
+            timer.start()
+
+    def begin_check_scan(self):
+        check_scan_thread = threading.Thread(target=self.check_scan)
+        check_scan_thread.daemon = True
+        check_scan_thread.start()
 
     def check_scan(self):
-        pass
+        with open(scan_file, 'r') as temp_file:
+            real_dir = temp_file.readline()
+            real_dir = real_dir.strip()
+        shutil.move(real_dir, Path(status_dir, "final_results.log"))
 
-    def on_switch(self):
-        pass
+        with open(Path(status_dir, "final_results.log")) as results_of_scan:
+            self.ap_store.clear()
 
-    def on_exit(self):
-        pass
+            reader = csv.reader(results_of_scan, dialect='excel-tab')
+            aps = {}
+            i = 0
+            for row in reader:
+                # Get network from scan, and filter out blank networks
+                # and \x00 networks.
+                network = row[2]
+                if r"\x00" in network:
+                    continue
+                elif network is "":
+                    continue
+                else:
+                    aps["row" + str(i)] = self.ap_store.append([network, "", "", ""])
+                
+                # Get quality from scan
+                quality = int(row[0])
+                if quality <= -100:
+                    percent = "0%"
+                elif quality >= -50:
+                    percent = "100%"
+                else:
+                    final_quality = (2 * (quality + 100))
+                    percent = str(final_quality) + "%"
+                if network == "":
+                    pass
+                else:
+                    self.ap_store.set(aps["row" + str(i)], 1, percent)
+
+                # Get Security
+                security = row[1]
+                if "WPA" in security:
+                    encryption = "WPA"
+                elif "OPENSSID" in security:
+                    encryption = "Open"
+                elif "WPS" in security:
+                    encryption = "WPS"
+                elif "WEP" in security:
+                    encryption = "WEP"
+                else:
+                    encryption = "Open"
+                
+                if network == "":
+                    pass
+                else:
+                    self.ap_store.set(aps["row" + str(i)], 2, encryption)
+
+                if is_connected is False:
+                    if network != "":
+                        self.ap_store.set(aps["row" + str(i)], 3, "No")
+                else:
+                    connected_network = check_output(self, "netctl list | sed -n 's/^\* //p'").strip()
+                    if network != "":
+                        if network in connected_network:
+                            self.ap_store.set(aps["row" + str(i)], 3, "Yes")
+                        else:
+                            self.ap_store.set(aps["row" + str(i)], 3, "No")
+                i += 1
+        
+
+    def on_switch(self, e):
+        if self.NoWifiMode == False:
+            self.ap_store.clear()
+            self.no_wifi_scan_mode()
+            self.NoWifiMode = True
+        else:
+            self.ap_store.clear()
+            self.NoWifiMode = False
+
+    def on_exit(self, e, d=None):
+        if self.thread is None:
+            pass
+        else:
+            self.thread.terminate()
+        Gtk.main_quit()
+        sys.exit(0)
 
     def about_clicked(self):
-        pass
+        about_dialog = self.builder.get_object("aboutDialog")
+        about_dialog.run()
+        about_dialog.hide()
 
-    def profile_exists(self, e):
-        pass
+    def get_profile(self):
+        skip_no_prof_conn = False
+        found_profile = False
+        select = self.ap_list.get_selection()
+        ssid = self.get_ssid(select)
+        for profile in os.listdir(Path("/", "etc", "netctl")):
+            if Path("/", "etc", "netctl", profile).is_file():
+                with open(Path("/", "etc", "netctl", profile), 'r') as current_profile:
+                    for line in current_profile:
+                        if "ESSID" in line.strip():
+                            essid_name = line[6:]
+                            if str(ssid).lower() in essid_name.lower():
+                                skip_no_prof_conn = True
+                                return profile
 
-    def connect_clicked(self, does_profile_exist, profile_name):
+    def connect_clicked(self, does_profile_exist, profile_name, e):
         pass
 
     def get_network_password(self):
         pass
 
     def get_ssid(self, selection):
-        pass
+        model, treeiter = selection.get_selected()
+        if treeiter is not None:
+            return model[treeiter[0]]
 
     def get_security(self, selection):
         pass
@@ -258,10 +392,17 @@ class NetGUI(Gtk.Window):
         pass
 
 def is_connected():
-    pass
+    check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
+    if check == b'':
+        return False
+    else:
+        return True
 
 def check_output(self, command):
-    pass
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    output = p.communicate()[0]
+    output = output.decode("utf-8")
+    return output
 
 def get_interface():
     interface_name = ""
