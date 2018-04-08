@@ -366,18 +366,33 @@ class NetGUI(Gtk.Window):
         pass
 
     def get_network_password(self):
-        pass
+        ret = self.dialog.run()
+        self.dialog.hide()
+        entry = self.builder.get_object("userEntry")
+        if ret == 1:
+            password = entry.get_text()
+            return password
 
     def get_ssid(self, selection):
         model, treeiter = selection.get_selected()
         if treeiter is not None:
-            return model[treeiter[0]]
+            return model[treeiter][0]
 
     def get_security(self, selection):
-        pass
+        model, treeiter = selection.get_selected()
+        if treeiter is not None:
+            security_type = model[treeiter][2]
+            security_type = security_type.lower()
+            return security_type
 
     def disconnect_clicked(self, e):
-        pass
+        select = self.ap_list.get_selection()
+        network_ssid = self.get_ssid(select)
+        profile = self.get_profile()
+        # TODO: Rewrite NetCtl.stop!
+        InterfaceControl.down(self, self.interface_name)
+        self.start_scan(None)
+        # TODO: Notification
 
     def disconnect_all_clicked(self, e):
         pass
