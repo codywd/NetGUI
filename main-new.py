@@ -363,11 +363,88 @@ class NetGUI(Gtk.Window):
                                 return profile
 
     def connect_clicked(self, does_profile_exist, profile_name, e):
-        pass
+        # process a connection request from the user
+        if does_profile_exist is 1:
+            select = self.ap_list.get_selection()
+            network_ssid = self.get_ssid(select)
+            # TODO: Notification
+            #n = Notify.Notification.new("Found existing profile.",
+            #                            "NetCTL found an existing profile for this network. Connecting to " +
+            #                            network_ssid + " using profile " + profile_name)
+            #n.show()
+            net_interface = self.interface_name
+            self.interface_control.down(net_interface)
+            NetCTL.stop_all()
+            NetCTL.start(profile_name)
+            # TODO: Notification
+            #n = Notify.Notification.new("Connected to new network!", "You are now connected to " + network_ssid,
+            #                            "dialog-information")
+            #n.show()
+
+        elif does_profile_exist == 0:
+            if self.NoWifiMode == 0:
+                select = self.ap_list.get_selection()
+                network_ssid = self.get_ssid(select)
+                print("nSSID = " + network_ssid)
+                profile = "netgui_" + network_ssid
+                print("profile = " + profile)
+                net_interface = self.interface_name
+                if Path(profile_dir, profile).is_file():
+                    self.interface_control.down(net_interface)
+                    NetCTL.stop_all()
+                    NetCTL.start(profile)
+                    # TODO: Notification
+                    # n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
+                    #                             network_ssid, "dialog-information")
+                    # n.show()
+                else:
+                    network_security = self.get_security(select)
+                    if network_security == "Open":
+                        key = "none"
+                    else:
+                        key = self.get_network_password()
+                    self.generate_config.create_wireless_config(network_ssid, self.interface_name, network_security, key)
+                    try:
+                        InterfaceControl.down(self, net_interface)
+                        NetCTL.stop_all()
+                        NetCTL.start(profile)
+                        #TODO: Notification
+                        # n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
+                        #                             network_ssid, "dialog-information")
+                        # n.show()
+                    except Exception as e:
+                        pass
+                        # TODO: Notification
+                        # n = Notify.Notification.new("Error!", "There was an error. The error was: " + str(e) +
+                        #                             ". Please report an issue at the github page if it persists.",
+                        #                             "dialog-information")
+                        # n.show()
+                        # Notify.uninit()
+            elif self.NoWifiMode == 1:
+                select = self.ap_list.get_selection()
+                nwm_profile = self.get_ssid(select)
+                net_interface = get_interface()
+                try:
+                    InterfaceControl.down(self, net_interface)
+                    NetCTL.stop_all()
+                    NetCTL.start(nwm_profile)
+                    # TODO: Notification
+                    # n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + nwm_profile,
+                    #                             "dialog-information")
+                    # n.show()
+                except:
+                    pass
+                    # TODO: Notification
+                    # n = Notify.Notification.new("Error!", "There was an error. Please report an issue at the "
+                    #                             + "github page if it persists.", "dialog-information")
+                    # n.show()
+                    # Notify.uninit()
+            self.start_scan(self)
+            
 
     def get_network_password(self):
-        ret = self.dialog.run()
-        self.dialog.hide()
+        ret = self.password_dialog.run()
+        self.password_dialog.hide()
         entry = self.builder.get_object("userEntry")
         if ret == 1:
             password = entry.get_text()
@@ -387,15 +464,14 @@ class NetGUI(Gtk.Window):
 
     def disconnect_clicked(self, e):
         select = self.ap_list.get_selection()
-        network_ssid = self.get_ssid(select)
         profile = self.get_profile()
-        # TODO: Rewrite NetCtl.stop!
+        NetCTL.stop(profile)
         InterfaceControl.down(self, self.interface_name)
         self.start_scan(None)
         # TODO: Notification
 
     def disconnect_all_clicked(self, e):
-        pass
+        NetCTL.stop_all()
 
     def preferences_clicked(self, e):
         pass

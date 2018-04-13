@@ -1,0 +1,10 @@
+[default]
+name=Default
+runtime=host
+config-opts=
+run-opts=
+prefix=/home/codywd/.cache/gnome-builder/install/NetGUI/host
+app-id=
+postbuild=
+prebuild=
+default=true
