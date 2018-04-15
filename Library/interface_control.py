@@ -6,10 +6,12 @@ class InterfaceControl():
     def __init__(self):
         super(InterfaceControl, self).__init__()
 
-    def down(self, interface):
+    @staticmethod
+    def down(interface):
         print("interface:: down: " + interface)
         subprocess.call(["ip", "link", "set", "down", "dev", interface])
 
-    def up(self, interface):
+    @staticmethod
+    def up(interface):
         print("interface:: up: " + interface)
         subprocess.call(["ip", "link", "set", "up", "dev", interface])

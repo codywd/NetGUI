@@ -93,7 +93,7 @@ with open(pid_file, 'w') as fp:
 
 class NetGUI(Gtk.Window):
     def __init__(self):
-        #self.scanning = False
+        self.scanning = False
         self.thread = None
         self.APindex = 0
         self.builder = Gtk.Builder()
@@ -115,8 +115,12 @@ class NetGUI(Gtk.Window):
         window = self.builder.get_object("mainWindow")
         window.connect("delete-event", Gtk.main_quit)
 
-        # Get the OnScan button in case we are going to run in NoWifiMode
-        scan_button = self.builder.get_object("scanAPsTool")
+        # Get the buttons in case we need to disable them
+        self.scan_button = self.builder.get_object("scanAPsTool")
+        self.connect_button = self.builder.get_object("connectTool")
+        self.disconnect_btn = self.builder.get_object("dConnectTool")
+        self.preferences_btn = self.builder.get_object("prefToolBtn")
+        self.exit_btn = self.builder.get_object("exitTool")
 
         # Setup the main area of netgui: The network list.
 
@@ -159,7 +163,7 @@ class NetGUI(Gtk.Window):
             "onExit": self.on_exit,
             "onAboutClicked": self.about_clicked,
             "onScan": self.start_scan,
-            "onConnect": self.get_profile,
+            "onConnect": self.connect_clicked,
             "onDConnect": self.disconnect_clicked,
             "onPrefClicked": self.preferences_clicked,
             "onHelpClicked": self.help_clicked,
@@ -204,12 +208,12 @@ class NetGUI(Gtk.Window):
             #n.show()
             self.no_wifi_scan_mode()
             self.NoWifiMode = True
-            scan_button.props.sensitive = False
+            self.scan_button.props.sensitive = False
             print(str(self.NoWifiMode))
         elif args.nowifi:
             self.no_wifi_scan_mode()
             self.NoWifiMode = True
-            scan_button.props.sensitive = False
+            self.scan_button.props.sensitive = False
         else:
             #self.startScan(None)
             self.NoWifiMode = False
@@ -229,27 +233,57 @@ class NetGUI(Gtk.Window):
             profile_edit_window = NetGUIProfileEditor(profile)
             profile_edit_window.show()
 
-
     def no_wifi_scan_mode(self):
-        pass
+        aps = {}
+        profiles = os.listdir(profile_dir)
+        i = 0
+        self.NoWifiMode = 1
+        global args
+        args.nowifi = True
+        for profile in profiles:
+            if Path("/", "etc", "netctl", profile).is_file():
+                aps["row" + str(i)] = self.ap_store.append([profile, "", "", ""])
+                self.ap_store.set(aps["row" + str(i)], 1, "N/A in No-Wifi mode.")
+                self.ap_store.set(aps["row" + str(i)], 2, "N/A")
+                if is_connected is False:
+                    self.ap_store.set(aps["row" + str(i)], 3, "No")
+                else:
+                    connected_network = check_output(self, "netctl list | sed -n 's/^\* //p'").strip()
+                    if profile in connected_network:
+                        self.ap_store.set(aps["row" + str(i)], 3, "Yes")
+                    else:
+                        self.ap_store.set(aps["row" + str(i)], 3, "No")
+                i += 1
 
     def start_scan(self, e):
         is_scan_done_queue = Queue()
         run_scan = ScanRoutines(self.interface_name, scan_file, status_dir, is_scan_done_queue)
         scan_thread = threading.Thread(target=run_scan.scan)
         scan_thread.daemon = True
+        self.scan_button.set_sensitive(False)
         scan_thread.start()
 
-        self.is_scan_done(is_scan_done_queue, scan_thread)
+        self.is_thread_done(is_scan_done_queue, scan_thread, "check_scan")
 
-    def is_scan_done(self, completion_queue, thread_to_join):
+    def is_thread_done(self, completion_queue, thread_to_join, reason):
         try:
             status = completion_queue.get(False)
             print(status)
-            #thread_to_join.join()
-            self.begin_check_scan()
+            thread_to_join.join()
+            if reason == "check_scan":
+                self.begin_check_scan()
+                self.scan_button.set_sensitive(True)
+            elif reason == "new_scan":
+                self.start_scan(self)
+                self.scan_button.set_sensitive(True)
+            elif reason == "netctl_stop_all":
+                pass
+            elif reason == "netctl_start":
+                pass
+            elif reason == "interface_down":
+                pass
         except Empty:
-            timer = threading.Timer(0.5, self.is_scan_done, args=[completion_queue, thread_to_join])
+            timer = threading.Timer(0.5, self.is_thread_done, args=[completion_queue, thread_to_join, reason])
             timer.start()
 
     def begin_check_scan(self):
@@ -324,7 +358,6 @@ class NetGUI(Gtk.Window):
                             self.ap_store.set(aps["row" + str(i)], 3, "No")
                 i += 1
         
-
     def on_switch(self, e):
         if self.NoWifiMode == False:
             self.ap_store.clear()
@@ -342,7 +375,7 @@ class NetGUI(Gtk.Window):
         Gtk.main_quit()
         sys.exit(0)
 
-    def about_clicked(self):
+    def about_clicked(self, e):
         about_dialog = self.builder.get_object("aboutDialog")
         about_dialog.run()
         about_dialog.hide()
@@ -361,10 +394,28 @@ class NetGUI(Gtk.Window):
                             if str(ssid).lower() in essid_name.lower():
                                 skip_no_prof_conn = True
                                 return profile
+        return None
 
-    def connect_clicked(self, does_profile_exist, profile_name, e):
+    def start_new_thread(self, task, profile=None):
+        task_queue = Queue()
+        if task == "interface_down":
+            thread = threading.Thread(target=InterfaceControl.down, args=[self.interface_name])
+        elif task == "netctl_stop_all":
+            thread = threading.Thread(target=NetCTL.stop_all)
+        elif task == "netctl_start":
+            thread = threading.Thread(target=NetCTL.start, args=[profile])
+        elif task == "netctl_stop":
+            thread = threading.Thread(target=NetCTL.stop, args=[profile])
+        thread.daemon = True
+        thread.start()
+        self.is_thread_done(task_queue, thread, task)
+
+
+    def connect_clicked(self, e):
+        self.scan_button.set_sensitive(False)
+        profile_name = self.get_profile()
         # process a connection request from the user
-        if does_profile_exist is 1:
+        if profile_name is not None:
             select = self.ap_list.get_selection()
             network_ssid = self.get_ssid(select)
             # TODO: Notification
@@ -372,27 +423,25 @@ class NetGUI(Gtk.Window):
             #                            "NetCTL found an existing profile for this network. Connecting to " +
             #                            network_ssid + " using profile " + profile_name)
             #n.show()
-            net_interface = self.interface_name
-            self.interface_control.down(net_interface)
-            NetCTL.stop_all()
-            NetCTL.start(profile_name)
+            self.start_new_thread("interface_down")
+            self.start_new_thread("netctl_stop_all")
+            self.start_new_thread("netctl_start", profile_name)
             # TODO: Notification
             #n = Notify.Notification.new("Connected to new network!", "You are now connected to " + network_ssid,
             #                            "dialog-information")
             #n.show()
 
-        elif does_profile_exist == 0:
+        else:
             if self.NoWifiMode == 0:
                 select = self.ap_list.get_selection()
                 network_ssid = self.get_ssid(select)
                 print("nSSID = " + network_ssid)
                 profile = "netgui_" + network_ssid
                 print("profile = " + profile)
-                net_interface = self.interface_name
                 if Path(profile_dir, profile).is_file():
-                    self.interface_control.down(net_interface)
-                    NetCTL.stop_all()
-                    NetCTL.start(profile)
+                    self.start_new_thread("interface_down")
+                    self.start_new_thread("netctl_stop_all")
+                    self.start_new_thread("netctl_start", profile_name)
                     # TODO: Notification
                     # n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
                     #                             network_ssid, "dialog-information")
@@ -405,9 +454,9 @@ class NetGUI(Gtk.Window):
                         key = self.get_network_password()
                     self.generate_config.create_wireless_config(network_ssid, self.interface_name, network_security, key)
                     try:
-                        InterfaceControl.down(self, net_interface)
-                        NetCTL.stop_all()
-                        NetCTL.start(profile)
+                        self.start_new_thread("interface_down")
+                        self.start_new_thread("netctl_stop_all")
+                        self.start_new_thread("netctl_start", profile_name)
                         #TODO: Notification
                         # n = Notify.Notification.new("Connected to new network!", "You are now connected to " +
                         #                             network_ssid, "dialog-information")
@@ -425,9 +474,9 @@ class NetGUI(Gtk.Window):
                 nwm_profile = self.get_ssid(select)
                 net_interface = get_interface()
                 try:
-                    InterfaceControl.down(self, net_interface)
-                    NetCTL.stop_all()
-                    NetCTL.start(nwm_profile)
+                    self.start_new_thread("interface_down")
+                    self.start_new_thread("netctl_stop_all")
+                    self.start_new_thread("netctl_start", nwm_profile)
                     # TODO: Notification
                     # n = Notify.Notification.new("Connected to new profile!", "You are now connected to " + nwm_profile,
                     #                             "dialog-information")
@@ -439,8 +488,13 @@ class NetGUI(Gtk.Window):
                     #                             + "github page if it persists.", "dialog-information")
                     # n.show()
                     # Notify.uninit()
-            self.start_scan(self)
-            
+
+        done_queue = Queue()
+        wait_thread = threading.Thread(target=self.non_block_wait, args=[done_queue])
+        wait_thread.daemon = True
+        wait_thread.start()
+
+        self.is_thread_done(done_queue, wait_thread, "new_scan")
 
     def get_network_password(self):
         ret = self.password_dialog.run()
@@ -472,15 +526,22 @@ class NetGUI(Gtk.Window):
 
     def disconnect_all_clicked(self, e):
         NetCTL.stop_all()
+        # TODO: Check Interface Control
+        InterfaceControl.down(None, self.interface_name)
+        self.start_scan(None)
 
     def preferences_clicked(self, e):
-        pass
+        Preferences(program_loc)
 
     def help_clicked(self, e):
         pass
 
     def report_issue(self, e):
         pass
+
+    def non_block_wait(self, queue):
+        time.sleep(1)
+        queue.put("Done")
 
 def is_connected():
     check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
