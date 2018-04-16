@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from gi.repository import Notify
+from gi.repository import Gtk, Notify
 
 class Notification():
     def __init__(self):
@@ -16,12 +16,20 @@ class Notification():
         elif "Terminal" in user_prefs["notification_type"]:
             self.notification_type = "print"
 
-    def show_notification(self, title, message):
+    def show_notification(self, title, message, parent=None):
         if self.notification_type == "NotificationCenter":
             n = Notify.Notification.new(title, message, "dialog-information")
             n.set_timeout(1000)
             n.show()
         elif self.notification_type == "MessageBoxes":
-            pass
+            messagedialog = Gtk.MessageDialog(parent=parent, flags=Gtk.DialogFlags.MODAL,
+                                              type=Gtk.MessageType.INFO, buttons=Gtk.ButtonsType.OK,
+                                              message_format=message)
+            messagedialog.connect("response", self.dialog_response)
+            messagedialog.show()
         elif self.notification_type == "print":
             print("{}: {}".format(title, message))
+
+    def dialog_response(self, widget, response_id):
+        if response_id == Gtk.ResponseType.OK:
+            widget.destroy()
