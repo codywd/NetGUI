@@ -317,71 +317,82 @@ class NetGUI(Gtk.Window):
         check_scan_thread.start()
 
     def check_scan(self):
-        with open(scan_file, 'r') as temp_file:
-            real_dir = temp_file.readline()
-            real_dir = real_dir.strip()
-        shutil.move(real_dir, Path(status_dir, "final_results.log"))
+        try:
+            with open(scan_file, 'r') as temp_file:
+                real_dir = temp_file.readline()
+                real_dir = real_dir.strip()
+            try:
+                shutil.move(real_dir, Path(status_dir, "final_results.log"))
+                try:
+                    with open(Path(status_dir, "final_results.log")) as results_of_scan:
+                        self.ap_store.clear()
 
-        with open(Path(status_dir, "final_results.log")) as results_of_scan:
-            self.ap_store.clear()
+                        reader = csv.reader(results_of_scan, dialect='excel-tab')
+                        aps = {}
+                        i = 0
+                        for row in reader:
+                            # Get network from scan, and filter out blank networks
+                            # and \x00 networks.
+                            network = row[2]
+                            if r"\x00" in network:
+                                continue
+                            elif network is "":
+                                continue
+                            else:
+                                aps["row" + str(i)] = self.ap_store.append([network, "", "", ""])
+                            
+                            # Get quality from scan
+                            quality = int(row[0])
+                            if quality <= -100:
+                                percent = "0%"
+                            elif quality >= -50:
+                                percent = "100%"
+                            else:
+                                final_quality = (2 * (quality + 100))
+                                percent = str(final_quality) + "%"
+                            if network == "":
+                                pass
+                            else:
+                                self.ap_store.set(aps["row" + str(i)], 1, percent)
 
-            reader = csv.reader(results_of_scan, dialect='excel-tab')
-            aps = {}
-            i = 0
-            for row in reader:
-                # Get network from scan, and filter out blank networks
-                # and \x00 networks.
-                network = row[2]
-                if r"\x00" in network:
-                    continue
-                elif network is "":
-                    continue
-                else:
-                    aps["row" + str(i)] = self.ap_store.append([network, "", "", ""])
-                
-                # Get quality from scan
-                quality = int(row[0])
-                if quality <= -100:
-                    percent = "0%"
-                elif quality >= -50:
-                    percent = "100%"
-                else:
-                    final_quality = (2 * (quality + 100))
-                    percent = str(final_quality) + "%"
-                if network == "":
-                    pass
-                else:
-                    self.ap_store.set(aps["row" + str(i)], 1, percent)
+                            # Get Security
+                            security = row[1]
+                            if "WPA" in security:
+                                encryption = "WPA"
+                            elif "OPENSSID" in security:
+                                encryption = "Open"
+                            elif "WPS" in security:
+                                encryption = "WPS"
+                            elif "WEP" in security:
+                                encryption = "WEP"
+                            else:
+                                encryption = "Open"
+                            
+                            if network == "":
+                                pass
+                            else:
+                                self.ap_store.set(aps["row" + str(i)], 2, encryption)
 
-                # Get Security
-                security = row[1]
-                if "WPA" in security:
-                    encryption = "WPA"
-                elif "OPENSSID" in security:
-                    encryption = "Open"
-                elif "WPS" in security:
-                    encryption = "WPS"
-                elif "WEP" in security:
-                    encryption = "WEP"
-                else:
-                    encryption = "Open"
-                
-                if network == "":
-                    pass
-                else:
-                    self.ap_store.set(aps["row" + str(i)], 2, encryption)
-
-                if is_connected is False:
-                    if network != "":
-                        self.ap_store.set(aps["row" + str(i)], 3, "No")
-                else:
-                    connected_network = check_output(self, "netctl list | sed -n 's/^\* //p'").strip()
-                    if network != "":
-                        if network in connected_network:
-                            self.ap_store.set(aps["row" + str(i)], 3, "Yes")
-                        else:
-                            self.ap_store.set(aps["row" + str(i)], 3, "No")
-                i += 1
+                            if is_connected is False:
+                                if network != "":
+                                    self.ap_store.set(aps["row" + str(i)], 3, "No")
+                            else:
+                                connected_network = check_output(self, "netctl list | sed -n 's/^\* //p'").strip()
+                                if network != "":
+                                    if network in connected_network:
+                                        self.ap_store.set(aps["row" + str(i)], 3, "Yes")
+                                    else:
+                                        self.ap_store.set(aps["row" + str(i)], 3, "No")
+                            i += 1
+                except FileNotFoundError:
+                    print("Error checking scan. Perhaps there were no networks nearby!")
+                    self.statusbar.push(self.context, "Error checking results. Perhaps there are no networks nearby.")
+            except FileNotFoundError:
+                print("Error checking scan. Perhaps there were no networks nearby!")
+                self.statusbar.push(self.context, "Error checking results. Perhaps there are no networks nearby.")
+        except FileNotFoundError:
+            print("Error checking scan. Perhaps there were no networks nearby!")
+            self.statusbar.push(self.context, "Error checking results. Perhaps there are no networks nearby.")
         
     def on_switch(self, e):
         if self.NoWifiMode == False:
