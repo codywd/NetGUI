@@ -19,7 +19,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
 gi.require_version('Notify', '0.7')
-from gi.repository import Gtk, GObject, GLib, GtkSource
+from gi.repository import Gtk, GObject, GtkSource
 
 # Importing project libraries
 from Library.profile_editor import NetGUIProfileEditor
@@ -31,7 +31,7 @@ from Library.generate_config import GenConfig
 from Library.preferences import Preferences
 
 # Base App Info
-program_version = "0.85"
+program_version = "0.86"
 profile_dir = Path("/", "etc", "netctl")
 status_dir = Path("/", "var", "lib", "netgui")
 program_loc = Path("/", "usr", "share", "netgui")

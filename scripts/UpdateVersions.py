@@ -58,8 +58,8 @@ class ModifyOtherVers():
     def updateMainFile():
         mainFile = ("main.py")
         for line in fileinput.input(mainFile, inplace=True):
-            if "progVer =" in line:
-                print(line.replace(line, 'progVer = "' + prog.version + '"'))
+            if "program_version =" in line:
+                print(line.replace(line, 'program_version = "' + prog.version + '"'))
             else:
                 print(line.rstrip("\n"))
                 
