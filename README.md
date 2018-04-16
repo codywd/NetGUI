@@ -22,9 +22,7 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 2. Issue #23 (Help function is not implemented.)
 3. Issue #25 (No Tray Icon)
 4. Issue #28 (Profile Editor is not implemented.)
-5. Issue #42 (KeyError: 'row0')
-6. Issue #44 (Uncaught exception when wpa_supplicant fails or there are no networks)
-7. Issue #45 (Enhancement: add support for 802.1x with certificates etc. on wire)
+5. Issue #45 (Enhancement: add support for 802.1x with certificates etc. on wire)
 
 ## General todo list / wish list
 

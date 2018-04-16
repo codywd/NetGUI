@@ -1,3 +1,25 @@
+0.85
+1. Proper multithreading (Will no longer freeze when scanning and connecting)
+2. Fixed Issue #44 (Uncaught exception when wpa_supplicant fails or there are no networks)
+3. Converted from os.path.join (or simple strings) to pathlib
+4. Added Notification Center and Print notification methods. Follows preferences dialog choice.
+
+0.8
+1. Fixed "TypeError: onBtnExit() takes 2 positional arguments but 3 were given" when clicking "X" button.
+2. Broke scanning routines out of GUI loop.
+3. When in Profile View/NoWifiMode, now it will say whether or not
+   you are connected.
+4. Rewrote the --help/-h argument.
+5. Added various tools. (NetCTL stop-all, ProfileView)
+6. Now correctly skips the network that sometimes shows up labeled
+   \x00\x00\x00\x00\x00...
+7. Fixed bug where, if multiple profiles exist for same network
+   (for example, MyNetwork and netgui_MyNetwork), it will
+   connect to one, then instantly connect to the other.
+8. Beginnings of profile editor. Will hopefully be much more
+   advanced, with auto-completion, syntax highlighting, and 
+   attribute insertion in the future.
+
 0.7.7
 1. Fixed the various GI Import issues regarding require_version
 2. Hardcoded image paths to ensure they always show.
