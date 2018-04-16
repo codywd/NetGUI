@@ -1,3 +1,6 @@
+0.86
+1. Added Gtk MessageBox as a Notification method.
+
 0.85
 1. Proper multithreading (Will no longer freeze when scanning and connecting)
 2. Fixed Issue #44 (Uncaught exception when wpa_supplicant fails or there are no networks)
