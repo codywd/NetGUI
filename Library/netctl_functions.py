@@ -1,4 +1,6 @@
 import subprocess
+from gi.repository import Gio
+
 
 class NetCTL(object):
     # These functions are to separate the Netctl code
@@ -7,37 +9,44 @@ class NetCTL(object):
         super(NetCTL, self).__init__()
 
     @staticmethod
-    def start(self, network):
+    def start(network):
         print("netctl:: start " + network)
-        subprocess.call(["netctl", "start", network])
+        process = Gio.Subprocess.new(["netctl", "start", network], 0)
+        process.wait_async()
         print("netctl:: started " + network)
 
     @staticmethod
-    def stop(self, network):
+    def stop(network):
         print("netctl:: stop " + network)
-        subprocess.call(["netctl", "stop", network])
+        process = Gio.Subprocess.new(["netctl", "stop", network], 0)
+        process.wait()
 
     @staticmethod
-    def stop_all(self):
+    def stop_all():
         print("netctl:: stop-all")
-        subprocess.call(["netctl", "stop-all"])
+        process = Gio.Subprocess.new(["netctl", "stop-all"], 0)
+        process.wait()
 
     @staticmethod
-    def restart(self, network):
+    def restart(network):
         print("netctl:: restart " + network)
-        subprocess.call(["netctl", "restart", network])
+        process = Gio.Subprocess.new(["netctl", "restart", network], 0)
+        process.wait()
 
     @staticmethod
-    def list(self):
+    def list():
         print("netctl:: list")
-        subprocess.call(["netctl", "list"])
+        process = Gio.Subprocess.new(["netctl", "list"], 0)
+        process.wait()
 
     @staticmethod
-    def enable(self, network):
+    def enable(network):
         print("netctl:: enable " + network)
-        subprocess.call(["netctl", "enable", network])
+        process = Gio.Subprocess.new(["netctl", "enable", network], 0)
+        process.wait()
 
     @staticmethod
-    def disable(self, network):
+    def disable(network):
         print("netctl:: disable " + network)
-        subprocess.call(["netctl", "disable", network])
+        process = Gio.Subprocess.new(["netctl", "disable", network], 0)
+        process.wait()

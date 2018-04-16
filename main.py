@@ -427,8 +427,8 @@ class NetGUI(Gtk.Window):
             #n.show()
             net_interface = self.interface_name
             self.interface_control.down(net_interface)
-            NetCTL.stop_all(self)
-            NetCTL.start(self, profile_name)
+            NetCTL.stop_all()
+            NetCTL.start(profile_name)
             #n = Notify.Notification.new("Connected to new network!", "You are now connected to " + network_ssid,
             #                            "dialog-information")
             #n.show()

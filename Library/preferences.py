@@ -18,7 +18,7 @@ class Preferences(Gtk.Window):
 
     def init_ui(self):
         GObject.type_register(GtkSource.View)
-        self.builder.add_from_file(self.program_loc + "UI.glade")
+        self.builder.add_from_file(str(Path(self.program_loc, "UI.glade")))
 
         # Get everything we need from UI.glade
         go = self.builder.get_object
