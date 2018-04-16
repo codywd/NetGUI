@@ -1,4 +1,4 @@
-# NetGUI v0.7.5
+# NetGUI v0.85
 
 NetGUI is an official fork of what was originally known as WiFiz. NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.
 
@@ -18,14 +18,18 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 4. notification-daemon
 
 ## Known Issues
-1. None
+1. Issue #21 (Preferences dialog is not implemented.)
+2. Issue #23 (Help function is not implemented.)
+3. Issue #25 (No Tray Icon)
+4. Issue #28 (Profile Editor is not implemented.)
+5. Issue #42 (KeyError: 'row0')
+6. Issue #44 (Uncaught exception when wpa_supplicant fails or there are no networks)
+7. Issue #45 (Enhancement: add support for 802.1x with certificates etc. on wire)
 
 ## General todo list / wish list
 
 - [ ] add tray icon
-- [x] mv all actual work out of the gui
 - [ ] interface with auto roaming
 - [ ] mild network diagnostics
-- [ ] build python module for netctl for outside apps
 - [ ] Incorporate surfatwork's Netctl icon/applet for Gnome shell (https://bbs.archlinux.org/viewtopic.php?id=182826)
 - [ ] Incorporate a launcher in Activities menu.

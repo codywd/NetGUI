@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='netgui',
-      version='0.7.5',
+      version='0.85',
     description = "More advanced GUI for NetCTL. Replaces WiFiz.",
     author = "Cody Dostal <dostalcody@gmail.com>, Gregory Mullen <greg@grayhatter.com>",
     url = "https://github.com/codywd/netgui",
@@ -26,6 +26,16 @@ setup(name='netgui',
          'imgs/disconnect.png',
          'imgs/logo.png',
          'imgs/preferences.png']),
+    ('/usr/share/netgui/Library',
+        ['Library/__init__.py',
+        'Library/generate_config.py',
+        'Library/interface_control.py',
+        'Library/netctl_functions.py',
+        'Library/notifications.py',
+        'Library/preferences.py',
+        'Library/profile_editor.py',
+        'Library/run_as_root.py',
+        'Library/scanning.py']),
     ('/usr/share/applications',
         ['scripts/netgui.desktop'])
     ]
