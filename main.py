@@ -57,7 +57,7 @@ if not Path(pref_file).exists():
         "default_profile": "",
         "unsecure_status": "False",
         "autoconnect": "False",
-        "notification_type": "3",
+        "notification_type": "Terminal",
     }
 
     with open(pref_file, "w+") as outfile:
