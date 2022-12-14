@@ -16,9 +16,10 @@ from queue import Queue, Empty
 
 # Import third party libraries
 import gi
-gi.require_version('Gtk', '3.0')
-gi.require_version('GtkSource', '3.0')
-gi.require_version('Notify', '0.7')
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("GtkSource", "3.0")
+gi.require_version("Notify", "0.7")
 from gi.repository import Gtk, GObject, GtkSource
 
 # Importing project libraries
@@ -51,46 +52,67 @@ if not Path(program_loc).exists():
     os.makedirs(program_loc)
 if not Path(license_dir).exists():
     os.makedirs(license_dir)
+if not Path(pref_file).exists():
+    json_prefs = {
+        "default_profile": "",
+        "unsecure_status": "False",
+        "autoconnect": "False",
+        "notification_type": "3",
+    }
+
+    with open(pref_file, "w+") as outfile:
+        json.dump(json_prefs, outfile)
 
 # Parse a variety of arguments
-parser = argparse.ArgumentParser(description='NetGUI; The NetCTL GUI! ' +
-                                             'We need root :)')
-parser.add_argument('-v', '--version',
-                    help='show the current version of NetGUI',
-                    action='store_true')
-parser.add_argument('-d', '--develop',
-                    help='run in development mode. ' +
-                    'If you are not a developer, do not use this.',
-                    action='store_true')
-parser.add_argument('-n', '--nowifi',
-                    help='run in no-wifi-mode. ' +
-                         'Does not scan for networks. ' +
-                         'Uses profiles to connect.',
-                    action='store_true')
+parser = argparse.ArgumentParser(
+    description="NetGUI; The NetCTL GUI! " + "We need root :)"
+)
+parser.add_argument(
+    "-v", "--version", help="show the current version of NetGUI", action="store_true"
+)
+parser.add_argument(
+    "-d",
+    "--develop",
+    help="run in development mode. " + "If you are not a developer, do not use this.",
+    action="store_true",
+)
+parser.add_argument(
+    "-n",
+    "--nowifi",
+    help="run in no-wifi-mode. "
+    + "Does not scan for networks. "
+    + "Uses profiles to connect.",
+    action="store_true",
+)
 args = parser.parse_args()
 if args.version:
-    print('Your NetGUI version is ' + program_version + '.')
+    print("Your NetGUI version is " + program_version + ".")
     sys.exit(0)
 
 if args.develop:
-    print('Running in development mode. ' +
-          'All files are set to be in the development folder.')
-    program_loc = './'
+    print(
+        "Running in development mode. "
+        + "All files are set to be in the development folder."
+    )
+    program_loc = "./"
     img_loc = "./imgs"
 
 if args.nowifi:
-    print('Running in No Wifi mode!')
+    print("Running in No Wifi mode!")
 
 # We only can allow one instance of netgui for safety.
-with open(pid_file, 'w') as fp:
+with open(pid_file, "w") as fp:
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
-        print("We only allow one instance of netgui to be running at a time for precautionary reasons.")
+        print(
+            "We only allow one instance of netgui to be running at a time for precautionary reasons."
+        )
         sys.exit(1)
-    
-    fp.write(str(pid_number)+"\n")
+
+    fp.write(str(pid_number) + "\n")
     fp.flush
+
 
 class NetGUI(Gtk.Window):
     def __init__(self):
@@ -112,11 +134,11 @@ class NetGUI(Gtk.Window):
         self.generate_config = GenConfig(profile_dir)
 
         self.notifications = Notification()
-        
+
         self.init_ui()
 
     def init_ui(self):
-        is_connected() # Are we connected to a network?
+        is_connected()  # Are we connected to a network?
 
         # Grab the "mainWindow" attribute from UI.glade, and set it to show everything.
         window = self.builder.get_object("mainWindow")
@@ -144,19 +166,25 @@ class NetGUI(Gtk.Window):
         self.ap_list.append_column(ssid_column)
 
         connect_quality_cell_renderer = Gtk.CellRendererText()
-        connect_quality_column = Gtk.TreeViewColumn("Connection Quality", connect_quality_cell_renderer, text=1)
+        connect_quality_column = Gtk.TreeViewColumn(
+            "Connection Quality", connect_quality_cell_renderer, text=1
+        )
         connect_quality_column.set_resizable(True)
         connect_quality_column.set_expand(True)
         self.ap_list.append_column(connect_quality_column)
 
         security_type_cell_renderer = Gtk.CellRendererText()
-        security_type_column = Gtk.TreeViewColumn("Security Type", security_type_cell_renderer, text=2)
+        security_type_column = Gtk.TreeViewColumn(
+            "Security Type", security_type_cell_renderer, text=2
+        )
         security_type_column.set_resizable(True)
         security_type_column.set_expand(True)
         self.ap_list.append_column(security_type_column)
 
         connected_cell_renderer = Gtk.CellRendererText()
-        connected_column = Gtk.TreeViewColumn("Connected?", connected_cell_renderer, text=3)
+        connected_column = Gtk.TreeViewColumn(
+            "Connected?", connected_cell_renderer, text=3
+        )
         connected_column.set_resizable(True)
         connected_column.set_expand(True)
         self.ap_list.append_column(connected_column)
@@ -176,24 +204,24 @@ class NetGUI(Gtk.Window):
             "onHelpClicked": self.help_clicked,
             "onIssueReport": self.report_issue,
             "onDAll": self.disconnect_all_clicked,
-            "onEditorActivate": self.open_profile_editor
+            "onEditorActivate": self.open_profile_editor,
         }
         # Connect all the above handlers to actually call the functions.
         self.builder.connect_signals(handlers)
-        
+
         # Hardcode (relative) image paths
         APScanToolImg = self.builder.get_object("image1")
         APScanToolImg.set_from_file(str(Path(img_loc, "APScan.png")))
-        
+
         ConnectToolImg = self.builder.get_object("image2")
         ConnectToolImg.set_from_file(str(Path(img_loc, "connect.png")))
-        
+
         dConnectToolImg = self.builder.get_object("image3")
         dConnectToolImg.set_from_file(str(Path(img_loc, "disconnect.png")))
-        
+
         prefToolImg = self.builder.get_object("image5")
         prefToolImg.set_from_file(str(Path(img_loc, "preferences.png")))
-        
+
         exitToolImg = self.builder.get_object("image4")
         exitToolImg.set_from_file(str(Path(img_loc, "exit.png")))
 
@@ -205,14 +233,17 @@ class NetGUI(Gtk.Window):
         for i in profiles:
             if Path("/etc/netctl/" + i).is_file():
                 profile_menu.get_submenu().append(Gtk.MenuItem(label=i))
-        #This should automatically detect their wireless device name. I'm not 100% sure
-        #if it works on every computer, but we can only know from multiple tests. If
-        #it doesn't work, I will re-implement the old way.
+        # This should automatically detect their wireless device name. I'm not 100% sure
+        # if it works on every computer, but we can only know from multiple tests. If
+        # it doesn't work, I will re-implement the old way.
         self.interface_name = get_interface()
         global args
         if self.interface_name == "" or args.nowifi:
-            self.notifications.show_notification("Could not detect interface!", "No interface was detected. Now running in " +
-                                                 "No-Wifi Mode. Scan Button is disabled.")
+            self.notifications.show_notification(
+                "Could not detect interface!",
+                "No interface was detected. Now running in "
+                + "No-Wifi Mode. Scan Button is disabled.",
+            )
             self.no_wifi_scan_mode()
             self.NoWifiMode = True
             self.scan_button.props.sensitive = False
@@ -249,7 +280,9 @@ class NetGUI(Gtk.Window):
                 if is_connected is False:
                     self.ap_store.set(aps["row" + str(i)], 3, "No")
                 else:
-                    connected_network = check_output(self, "netctl list | sed -n 's/^\* //p'").strip()
+                    connected_network = check_output(
+                        self, "netctl list | sed -n 's/^\* //p'"
+                    ).strip()
                     if profile in connected_network:
                         self.ap_store.set(aps["row" + str(i)], 3, "Yes")
                     else:
@@ -257,9 +290,13 @@ class NetGUI(Gtk.Window):
                 i += 1
 
     def start_scan(self, e):
-        self.notifications.show_notification("Starting scan", "Scan is now beginning. Please wait for completion.")
+        self.notifications.show_notification(
+            "Starting scan", "Scan is now beginning. Please wait for completion."
+        )
         is_scan_done_queue = Queue()
-        run_scan = ScanRoutines(self.interface_name, scan_file, status_dir, is_scan_done_queue)
+        run_scan = ScanRoutines(
+            self.interface_name, scan_file, status_dir, is_scan_done_queue
+        )
         scan_thread = threading.Thread(target=run_scan.scan)
         scan_thread.daemon = True
         self.disable_buttons()
@@ -275,7 +312,9 @@ class NetGUI(Gtk.Window):
             self.statusbar.push(self.context, "Scanning Complete.")
             self.enable_buttons()
         except Empty:
-            timer = threading.Timer(0.5, self.is_thread_done, args=[completion_queue, thread_to_join])
+            timer = threading.Timer(
+                0.5, self.is_thread_done, args=[completion_queue, thread_to_join]
+            )
             timer.start()
 
     def begin_check_scan(self):
@@ -285,7 +324,7 @@ class NetGUI(Gtk.Window):
 
     def check_scan(self):
         try:
-            with open(scan_file, 'r') as temp_file:
+            with open(scan_file, "r") as temp_file:
                 real_dir = temp_file.readline()
                 real_dir = real_dir.strip()
             try:
@@ -294,7 +333,7 @@ class NetGUI(Gtk.Window):
                     with open(Path(status_dir, "final_results.log")) as results_of_scan:
                         self.ap_store.clear()
 
-                        reader = csv.reader(results_of_scan, dialect='excel-tab')
+                        reader = csv.reader(results_of_scan, dialect="excel-tab")
                         aps = {}
                         i = 0
                         for row in reader:
@@ -306,8 +345,10 @@ class NetGUI(Gtk.Window):
                             elif network is "":
                                 continue
                             else:
-                                aps["row" + str(i)] = self.ap_store.append([network, "", "", ""])
-                            
+                                aps["row" + str(i)] = self.ap_store.append(
+                                    [network, "", "", ""]
+                                )
+
                             # Get quality from scan
                             quality = int(row[0])
                             if quality <= -100:
@@ -315,7 +356,7 @@ class NetGUI(Gtk.Window):
                             elif quality >= -50:
                                 percent = "100%"
                             else:
-                                final_quality = (2 * (quality + 100))
+                                final_quality = 2 * (quality + 100)
                                 percent = str(final_quality) + "%"
                             if network == "":
                                 pass
@@ -334,7 +375,7 @@ class NetGUI(Gtk.Window):
                                 encryption = "WEP"
                             else:
                                 encryption = "Open"
-                            
+
                             if network == "":
                                 pass
                             else:
@@ -344,7 +385,9 @@ class NetGUI(Gtk.Window):
                                 if network != "":
                                     self.ap_store.set(aps["row" + str(i)], 3, "No")
                             else:
-                                connected_network = check_output(self, "netctl list | sed -n 's/^\* //p'").strip()
+                                connected_network = check_output(
+                                    self, "netctl list | sed -n 's/^\* //p'"
+                                ).strip()
                                 if network != "":
                                     if network in connected_network:
                                         self.ap_store.set(aps["row" + str(i)], 3, "Yes")
@@ -352,23 +395,46 @@ class NetGUI(Gtk.Window):
                                         self.ap_store.set(aps["row" + str(i)], 3, "No")
                             i += 1
                 except FileNotFoundError:
-                    self.notifications.show_notification("Error checking scan!", "Perhaps there were no networks nearby!", self)
-                    self.statusbar.push(self.context, "Error checking results. Perhaps there are no networks nearby.")
+                    self.notifications.show_notification(
+                        "Error checking scan!",
+                        "Perhaps there were no networks nearby!",
+                        self,
+                    )
+                    self.statusbar.push(
+                        self.context,
+                        "Error checking results. Perhaps there are no networks nearby.",
+                    )
             except FileNotFoundError:
-                self.notifications.show_notification("Error checking scan!", "Perhaps there were no networks nearby!", self)
-                self.statusbar.push(self.context, "Error checking results. Perhaps there are no networks nearby.")
+                self.notifications.show_notification(
+                    "Error checking scan!",
+                    "Perhaps there were no networks nearby!",
+                    self,
+                )
+                self.statusbar.push(
+                    self.context,
+                    "Error checking results. Perhaps there are no networks nearby.",
+                )
         except FileNotFoundError:
-            self.notifications.show_notification("Error checking scan!", "Perhaps there were no networks nearby!", self)
-            self.statusbar.push(self.context, "Error checking results. Perhaps there are no networks nearby.")
-        
+            self.notifications.show_notification(
+                "Error checking scan!", "Perhaps there were no networks nearby!", self
+            )
+            self.statusbar.push(
+                self.context,
+                "Error checking results. Perhaps there are no networks nearby.",
+            )
+
     def on_switch(self, e):
         if self.NoWifiMode == False:
-            self.notifications.show_notification("Switching to No-Wifi mode.", "Switching to no-wifi mode.", self)
+            self.notifications.show_notification(
+                "Switching to No-Wifi mode.", "Switching to no-wifi mode.", self
+            )
             self.ap_store.clear()
             self.no_wifi_scan_mode()
             self.NoWifiMode = True
         else:
-            self.notifications.show_notification("Switching to wifi mode.", "Switching to wifi mode.", self)
+            self.notifications.show_notification(
+                "Switching to wifi mode.", "Switching to wifi mode.", self
+            )
             self.ap_store.clear()
             self.NoWifiMode = False
 
@@ -390,20 +456,24 @@ class NetGUI(Gtk.Window):
         ssid = self.get_ssid(select)
         for profile in os.listdir(Path("/", "etc", "netctl")):
             if Path("/", "etc", "netctl", profile).is_file():
-                with open(Path("/", "etc", "netctl", profile), 'r') as current_profile:
+                with open(Path("/", "etc", "netctl", profile), "r") as current_profile:
                     for line in current_profile:
                         if "ESSID" in line.strip():
                             essid_name = line[6:]
                             if str(ssid).lower() in essid_name.lower():
                                 return profile
         return None
-    
+
     def connect_clicked(self, e):
         self.disable_buttons()
         profile_name = self.get_profile()
         if profile_name is not None:
-            self.notifications.show_notification("Profile found!", "Found profile {} for this network. Connecting " +
-                                    "using pre-existing profile!".format(profile_name), self)
+            self.notifications.show_notification(
+                "Profile found!",
+                "Found profile {} for this network. Connecting "
+                + "using pre-existing profile!".format(profile_name),
+                self,
+            )
             select = self.ap_list.get_selection()
             network_ssid = self.get_ssid(select)
             self.statusbar.push(self.context, "Connecting to {}".format(profile_name))
@@ -414,7 +484,11 @@ class NetGUI(Gtk.Window):
             self.statusbar.push(self.context, "Connected to {}".format(profile_name))
         else:
             if self.NoWifiMode == False:
-                self.notifications.show_notification("No profile found.", "There is no profile for this network. Creating one now!", self)
+                self.notifications.show_notification(
+                    "No profile found.",
+                    "There is no profile for this network. Creating one now!",
+                    self,
+                )
                 select = self.ap_list.get_selection()
                 network_ssid = self.get_ssid(select)
                 profile = "netgui_" + network_ssid
@@ -428,7 +502,9 @@ class NetGUI(Gtk.Window):
                         key = "none"
                     else:
                         key = self.get_network_password()
-                    self.generate_config.create_wireless_config(network_ssid, self.interface_name, network_security, key)
+                    self.generate_config.create_wireless_config(
+                        network_ssid, self.interface_name, network_security, key
+                    )
                     try:
                         InterfaceControl.down(self.interface_name)
                         NetCTL.stop_all()
@@ -436,7 +512,11 @@ class NetGUI(Gtk.Window):
                     except Exception as e:
                         pass
             elif self.NoWifiMode == 1:
-                self.notifications.show_notification("We are in no-wifi mode.", "We are in no-wifi mode, connecting to existing profile.", self)
+                self.notifications.show_notification(
+                    "We are in no-wifi mode.",
+                    "We are in no-wifi mode, connecting to existing profile.",
+                    self,
+                )
                 select = self.ap_list.get_selection()
                 nwm_profile = self.get_profile()
                 try:
@@ -447,7 +527,7 @@ class NetGUI(Gtk.Window):
                     pass
         self.start_scan(None)
         GObject.timeout_add_seconds(5, self.enable_buttons)
-        
+
     def disable_buttons(self):
         self.scan_button.set_sensitive(False)
         self.connect_button.set_sensitive(False)
@@ -486,12 +566,16 @@ class NetGUI(Gtk.Window):
         select = self.ap_list.get_selection()
         profile = self.get_profile()
         NetCTL.stop(profile)
-        self.notifications.show_notification("Stopping profile.", "Stopping profile: {}".format(profile), self)
+        self.notifications.show_notification(
+            "Stopping profile.", "Stopping profile: {}".format(profile), self
+        )
         InterfaceControl.down(self.interface_name)
         self.start_scan(None)
 
     def disconnect_all_clicked(self, e):
-        self.notifications.show_notification("Stopping all profiles.", "Stopping all profiles!", self)
+        self.notifications.show_notification(
+            "Stopping all profiles.", "Stopping all profiles!", self
+        )
         NetCTL.stop_all()
         InterfaceControl.down(self.interface_name)
         self.start_scan(None)
@@ -500,23 +584,30 @@ class NetGUI(Gtk.Window):
         Preferences(program_loc)
 
     def help_clicked(self, e):
-        self.notifications.show_notification("Not Implemented", "This function is not yet implemented.", self)
+        self.notifications.show_notification(
+            "Not Implemented", "This function is not yet implemented.", self
+        )
 
     def report_issue(self, e):
-        self.notifications.show_notification("Not Implemented", "This function is not yet implemented.", self)
+        self.notifications.show_notification(
+            "Not Implemented", "This function is not yet implemented.", self
+        )
+
 
 def is_connected():
     check = subprocess.check_output("netctl list | sed -n 's/^\* //p'", shell=True)
-    if check == b'':
+    if check == b"":
         return False
     else:
         return True
+
 
 def check_output(self, command):
     p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
     output = p.communicate()[0]
     output = output.decode("utf-8")
     return output
+
 
 def get_interface():
     interface_name = ""
@@ -529,20 +620,23 @@ def get_interface():
             else:
                 pass
         if interface_name == "":
-            int_name_check = str(subprocess.check_output("cat /proc/net/wireless", shell=True))
+            int_name_check = str(
+                subprocess.check_output("cat /proc/net/wireless", shell=True)
+            )
             interface_name = int_name_check[166:172]
         if interface_name == "":
-            #interfaceName = Need the code here
+            # interfaceName = Need the code here
             pass
-        f = open(interface_conf_file, 'w')
+        f = open(interface_conf_file, "w")
         f.write(interface_name)
         f.close()
         return str(interface_name).strip()
     else:
-        f = open(interface_conf_file, 'r')
+        f = open(interface_conf_file, "r")
         interface_name = f.readline()
         f.close()
         return str(interface_name).strip()
+
 
 def cleanup():
     fcntl.lockf(fp, fcntl.LOCK_UN)
@@ -554,7 +648,8 @@ def cleanup():
         os.unlink(interface_conf_file)
     except:
         pass
-    
+
+
 if __name__ == "__main__":
     NetGUI()
     Gtk.main()
