@@ -30,5 +30,5 @@ git describe --always --long | sed -E 's/([^-]*-g)/r\1/;s/-/./g'
 
 package() {
 cd $srcdir/$_gitname
-python2 setup.py install --root="$pkgdir/" --optimize=1
+python setup.py install --root="$pkgdir/" --optimize=1
 }
