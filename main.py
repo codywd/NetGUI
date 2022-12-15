@@ -31,28 +31,28 @@ from Library.scanning import ScanRoutines
 from Library.generate_config import GenConfig
 from Library.preferences import Preferences
 
-# Base App Info
-program_version = "0.86"
-profile_dir = Path("/", "etc", "netctl")
-status_dir = Path("/", "var", "lib", "netgui")
-program_loc = Path("/", "usr", "share", "netgui")
-interface_conf_file = Path(status_dir, "interface.cfg")
-license_dir = Path("/", "usr", "share", "licenses", "netgui")
-scan_file = Path(status_dir, "scan_results.log")
-pid_file = Path(status_dir, "program.pid")
-img_loc = Path(program_loc, "imgs")
-pref_file = Path(status_dir, "preferences.json")
-pid_number = os.getpid()
-arg_no_wifi = 0
+# Define Constants
+PROGRAM_VERSION = "0.86"
+PROFILE_DIR = Path("/", "etc", "netctl")
+STATUS_DIR = Path("/", "var", "lib", "netgui")
+PROGRAM_LOC = Path("/", "usr", "share", "netgui")
+INTERFACE_CONF_FILE = Path(STATUS_DIR, "interface.cfg")
+LICENSE_DIR = Path("/", "usr", "share", "licenses", "netgui")
+SCAN_FILE = Path(STATUS_DIR, "scan_results.log")
+PID_FILE = Path(STATUS_DIR, "program.pid")
+IMG_LOC = Path(PROGRAM_LOC, "imgs")
+PREF_FILE = Path(STATUS_DIR, "preferences.json")
+PID_NUMBER = os.getpid()
+ARG_NO_WIFI = 0
 
 # Safety First! Do we have our directories?
-if not Path(status_dir).exists():
-    os.makedirs(status_dir)
-if not Path(program_loc).exists():
-    os.makedirs(program_loc)
-if not Path(license_dir).exists():
-    os.makedirs(license_dir)
-if not Path(pref_file).exists():
+if not Path(STATUS_DIR).exists():
+    os.makedirs(STATUS_DIR)
+if not Path(PROGRAM_LOC).exists():
+    os.makedirs(PROGRAM_LOC)
+if not Path(LICENSE_DIR).exists():
+    os.makedirs(LICENSE_DIR)
+if not Path(PREF_FILE).exists():
     json_prefs = {
         "default_profile": "",
         "unsecure_status": "False",
@@ -60,7 +60,7 @@ if not Path(pref_file).exists():
         "notification_type": "Terminal",
     }
 
-    with open(pref_file, "w+") as outfile:
+    with open(PREF_FILE, "w+") as outfile:
         json.dump(json_prefs, outfile)
 
 # Parse a variety of arguments
@@ -86,7 +86,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 if args.version:
-    print("Your NetGUI version is " + program_version + ".")
+    print("Your NetGUI version is " + PROGRAM_VERSION + ".")
     sys.exit(0)
 
 if args.develop:
@@ -94,14 +94,14 @@ if args.develop:
         "Running in development mode. "
         + "All files are set to be in the development folder."
     )
-    program_loc = "./"
-    img_loc = "./imgs"
+    PROGRAM_LOC = "./"
+    IMG_LOC = "./imgs"
 
 if args.nowifi:
     print("Running in No Wifi mode!")
 
 # We only can allow one instance of netgui for safety.
-with open(pid_file, "w") as fp:
+with open(PID_FILE, "w") as fp:
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
@@ -110,7 +110,7 @@ with open(pid_file, "w") as fp:
         )
         sys.exit(1)
 
-    fp.write(str(pid_number) + "\n")
+    fp.write(str(PID_NUMBER) + "\n")
     fp.flush
 
 
@@ -121,7 +121,7 @@ class NetGUI(Gtk.Window):
         self.APindex = 0
         self.builder = Gtk.Builder()
         GObject.type_register(GtkSource.View)
-        self.builder.add_from_file(str(Path(program_loc, "UI.glade")))
+        self.builder.add_from_file(str(Path(PROGRAM_LOC, "UI.glade")))
         self.password_dialog = self.builder.get_object("passwordDialog")
         self.ap_list = self.builder.get_object("treeview1")
         self.ap_store = Gtk.ListStore(str, str, str, str)
@@ -131,7 +131,7 @@ class NetGUI(Gtk.Window):
         self.NoWifiMode = False
         self.interface_control = InterfaceControl()
         self.next_function = None
-        self.generate_config = GenConfig(profile_dir)
+        self.generate_config = GenConfig(PROFILE_DIR)
 
         self.notifications = Notification()
 
@@ -211,19 +211,19 @@ class NetGUI(Gtk.Window):
 
         # Hardcode (relative) image paths
         APScanToolImg = self.builder.get_object("image1")
-        APScanToolImg.set_from_file(str(Path(img_loc, "APScan.png")))
+        APScanToolImg.set_from_file(str(Path(IMG_LOC, "APScan.png")))
 
         ConnectToolImg = self.builder.get_object("image2")
-        ConnectToolImg.set_from_file(str(Path(img_loc, "connect.png")))
+        ConnectToolImg.set_from_file(str(Path(IMG_LOC, "connect.png")))
 
         dConnectToolImg = self.builder.get_object("image3")
-        dConnectToolImg.set_from_file(str(Path(img_loc, "disconnect.png")))
+        dConnectToolImg.set_from_file(str(Path(IMG_LOC, "disconnect.png")))
 
         prefToolImg = self.builder.get_object("image5")
-        prefToolImg.set_from_file(str(Path(img_loc, "preferences.png")))
+        prefToolImg.set_from_file(str(Path(IMG_LOC, "preferences.png")))
 
         exitToolImg = self.builder.get_object("image4")
-        exitToolImg.set_from_file(str(Path(img_loc, "exit.png")))
+        exitToolImg.set_from_file(str(Path(IMG_LOC, "exit.png")))
 
         # Populate profiles menu
         profile_menu = self.builder.get_object("profilesMenu")
@@ -267,7 +267,7 @@ class NetGUI(Gtk.Window):
 
     def no_wifi_scan_mode(self):
         aps = {}
-        profiles = os.listdir(profile_dir)
+        profiles = os.listdir(PROFILE_DIR)
         i = 0
         self.NoWifiMode = 1
         global args
@@ -295,7 +295,7 @@ class NetGUI(Gtk.Window):
         )
         is_scan_done_queue = Queue()
         run_scan = ScanRoutines(
-            self.interface_name, scan_file, status_dir, is_scan_done_queue
+            self.interface_name, SCAN_FILE, STATUS_DIR, is_scan_done_queue
         )
         scan_thread = threading.Thread(target=run_scan.scan)
         scan_thread.daemon = True
@@ -324,13 +324,13 @@ class NetGUI(Gtk.Window):
 
     def check_scan(self):
         try:
-            with open(scan_file, "r") as temp_file:
+            with open(SCAN_FILE, "r") as temp_file:
                 real_dir = temp_file.readline()
                 real_dir = real_dir.strip()
             try:
-                shutil.move(real_dir, Path(status_dir, "final_results.log"))
+                shutil.move(real_dir, Path(STATUS_DIR, "final_results.log"))
                 try:
-                    with open(Path(status_dir, "final_results.log")) as results_of_scan:
+                    with open(Path(STATUS_DIR, "final_results.log")) as results_of_scan:
                         self.ap_store.clear()
 
                         reader = csv.reader(results_of_scan, dialect="excel-tab")
@@ -492,7 +492,7 @@ class NetGUI(Gtk.Window):
                 select = self.ap_list.get_selection()
                 network_ssid = self.get_ssid(select)
                 profile = "netgui_" + network_ssid
-                if Path(profile_dir, profile).is_file():
+                if Path(PROFILE_DIR, profile).is_file():
                     InterfaceControl.down(self.interface_name)
                     NetCTL.stop_all()
                     NetCTL.start(profile_name)
@@ -581,7 +581,7 @@ class NetGUI(Gtk.Window):
         self.start_scan(None)
 
     def preferences_clicked(self, e):
-        Preferences(program_loc)
+        Preferences(PROGRAM_LOC)
 
     def help_clicked(self, e):
         self.notifications.show_notification(
@@ -611,7 +611,7 @@ def check_output(self, command):
 
 def get_interface():
     interface_name = ""
-    if not Path(interface_conf_file).is_file():
+    if not Path(INTERFACE_CONF_FILE).is_file():
 
         devices = os.listdir("/sys/class/net")
         for device in devices:
@@ -627,12 +627,12 @@ def get_interface():
         if interface_name == "":
             # interfaceName = Need the code here
             pass
-        f = open(interface_conf_file, "w")
+        f = open(INTERFACE_CONF_FILE, "w")
         f.write(interface_name)
         f.close()
         return str(interface_name).strip()
     else:
-        f = open(interface_conf_file, "r")
+        f = open(INTERFACE_CONF_FILE, "r")
         interface_name = f.readline()
         f.close()
         return str(interface_name).strip()
@@ -641,11 +641,11 @@ def get_interface():
 def cleanup():
     fcntl.lockf(fp, fcntl.LOCK_UN)
     fp.close()
-    os.unlink(pid_file)
+    os.unlink(PID_FILE)
     try:
-        os.unlink(scan_file)
-        os.unlink(pref_file)
-        os.unlink(interface_conf_file)
+        os.unlink(SCAN_FILE)
+        os.unlink(PREF_FILE)
+        os.unlink(INTERFACE_CONF_FILE)
     except:
         pass
 
