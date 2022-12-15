@@ -1,6 +1,7 @@
 0.86
 1. Added Gtk MessageBox as a Notification method.
 2. Fix issue #59, FileNotFoundError (preferences file does not exist on launch, resulting in a crash)
+3. Update constants to ALL_CAPS format
 
 0.85
 1. Proper multithreading (Will no longer freeze when scanning and connecting)
