@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!DOCTYPE cambalache-project SYSTEM "cambalache-project.dtd">
+<cambalache-project version="0.10.3" target_tk="gtk-4.0">
+  <ui>
+	(1,None,"netgui.ui","netgui.ui",None,None,None,None,None,None),
+	(2,None,"new-ui.glade","new-ui.glade",None,None,None,None,None,None)
+  </ui>
+  <ui_library>
+	(2,"gtk","4.0",None)
+  </ui_library>
+  <object>
+	(1,1,"GtkAboutDialog","aboutDialog",None,None,None,None,None),
+	(1,2,"GtkWindow",None,None,None,None,None,None),
+	(1,3,"GtkBox","box1",2,None,None,None,-1),
+	(1,4,"GtkBox","toolbar",3,None,None,None,1),
+	(1,5,"GtkMenuButton",None,4,None,None,None,None),
+	(1,6,"GtkMenuButton",None,4,None,None,None,1),
+	(1,7,"GtkMenuButton",None,4,None,None,None,2)
+  </object>
+  <object_property>
+	(1,1,"GtkAboutDialog","artists","Sam Stuewe &lt;halosghost@archlinux.info&gt;",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","authors","Cody Dostal (a.k.a. Pivotraze) &lt;cody@dostalsecurity.com&gt;\nGregory Mullen (a.k.a. GrayHatter) &lt;greg@grayhatter.com&gt;",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","comments","NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux.",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","copyright","Copyright (c) 2022. Cody Dostal	",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","license","Copyright (c) 2022 Cody Dostal, Pivotraze\n\n        Permission is hereby granted, free of charge, to any person\nobtaining a copy of this software and associated documentation files\n(the \"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the Software, and to\npermit persons to whom the Software is furnished to do so, subject to\nthe following conditions:\n\n        The above copyright notice and this permission notice shall be\nincluded in all copies or substantial portions of the Software. The\nend-user documentation included with the redistribution, if any, must\ninclude the following acknowledgment: \"This product includes software\ndeveloped by Cody Dostal https://github.com/codywd and its\ncontributors\", in the same place and form as other third-party\nacknowledgments. Alternatively, this acknowledgment may appear in the\nsoftware itself, in the same form and location as other such third-party\nacknowledgments.\n\n        THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\nIN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY\nCLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,\nTORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE\nSOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","license-type","custom",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","logo-icon-name","image-missing",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","program-name","NetGUI",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","version","0.86",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","website","https://github.com/codywd/NetGUI",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","website-label","GitHub",None,None,None,None,None),
+	(1,1,"GtkAboutDialog","wrap-license","True",None,None,None,None,None),
+	(1,1,"GtkAccessible","accessible-role","option",None,None,None,None,None),
+	(1,3,"GtkOrientable","orientation","vertical",None,None,None,None,None),
+	(1,4,"GtkWidget","css-classes","toolbar",None,None,None,None,None)
+  </object_property>
+</cambalache-project>

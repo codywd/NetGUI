@@ -17,8 +17,8 @@ from queue import Queue, Empty
 # Import third party libraries
 import gi
 
-gi.require_version("Gtk", "3.0")
-gi.require_version("GtkSource", "3.0")
+gi.require_version("Gtk", "4.0")
+gi.require_version("GtkSource", "5")
 gi.require_version("Notify", "0.7")
 from gi.repository import Gtk, GObject, GtkSource
 
@@ -121,7 +121,7 @@ class NetGUI(Gtk.Window):
         self.APindex = 0
         self.builder = Gtk.Builder()
         GObject.type_register(GtkSource.View)
-        self.builder.add_from_file(str(Path(PROGRAM_LOC, "UI.glade")))
+        self.builder.add_from_file(str(Path(PROGRAM_LOC, "new-ui.glade")))
         self.password_dialog = self.builder.get_object("passwordDialog")
         self.ap_list = self.builder.get_object("treeview1")
         self.ap_store = Gtk.ListStore(str, str, str, str)
@@ -342,7 +342,7 @@ class NetGUI(Gtk.Window):
                             network = row[2]
                             if r"\x00" in network:
                                 continue
-                            elif network is "":
+                            elif network == "":
                                 continue
                             else:
                                 aps["row" + str(i)] = self.ap_store.append(

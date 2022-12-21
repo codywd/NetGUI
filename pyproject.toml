@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "netgui"
+version = "0.86"
+description = "NetGUI is a GUI frontend to NetCTL, a network manager developed for Arch Linux."
+authors = ["Cody Dostal <cody@codydostal.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+PyGObject = "^3.42.2"
+tomlkit = "^0.11.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

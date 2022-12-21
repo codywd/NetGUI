@@ -13,7 +13,7 @@ NetGUI is in beta state. NetGUI is a rewrite from scratch of WiFiz, to take adva
 
 ## Dependencies
 1. Python3
-2. python-gobject
+2. PyGObject
 3. netctl
 4. notification-daemon
 
